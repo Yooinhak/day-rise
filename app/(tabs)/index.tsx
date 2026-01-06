@@ -1,9 +1,12 @@
 // app/(tabs)/index.tsx
 import { Feather } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import "../../global.css";
 
 export default function HomeScreen() {
+  const router = useRouter();
+
   return (
     <View className="flex-1 bg-bg-warm px-6 pt-16">
       {/* 헤더 섹션 */}
@@ -16,13 +19,13 @@ export default function HomeScreen() {
             오늘도 멋진 하루를{"\n"}만들어봐요, 지민님! 🌿
           </Text>
         </View>
-        <TouchableOpacity className="bg-card p-3 rounded-full shadow-sm">
-          <Feather name="bell" size={20} color="#4A3F35" />
+        <TouchableOpacity className="bg-card p-3 rounded-full border border-border-soft shadow-sm">
+          <Feather name="bell" size={20} color="#3C322B" />
         </TouchableOpacity>
       </View>
 
       {/* 주간 달성도 (Progress) */}
-      <View className="bg-primary/10 p-5 rounded-2xl mb-8 flex-row items-center justify-between">
+      <View className="bg-primary/10 p-5 rounded-2xl mb-8 flex-row items-center justify-between border border-primary/20">
         <View>
           <Text className="text-primary font-bold text-lg">
             오늘의 달성률 65%
@@ -31,7 +34,7 @@ export default function HomeScreen() {
             조금만 더 힘내면 완벽해요!
           </Text>
         </View>
-        <View className="w-12 h-12 rounded-full border-4 border-primary items-center justify-center">
+        <View className="w-12 h-12 rounded-full border-4 border-primary items-center justify-center bg-card">
           <Text className="text-primary font-bold text-xs">5/8</Text>
         </View>
       </View>
@@ -73,8 +76,11 @@ export default function HomeScreen() {
         </ScrollView>
       </View>
 
-      {/* Floating Action Button */}
-      <TouchableOpacity className="absolute bottom-6 right-6 w-14 h-14 bg-primary rounded-full items-center justify-center shadow-lg shadow-primary/40">
+      {/* 3. Floating Action Button 수정 */}
+      <TouchableOpacity
+        onPress={() => router.push("/create")} // 4. 클릭 시 create 페이지로 이동
+        className="absolute bottom-6 right-6 w-14 h-14 bg-primary rounded-full items-center justify-center shadow-lg shadow-primary/40"
+      >
         <Feather name="plus" size={30} color="white" />
       </TouchableOpacity>
     </View>
@@ -95,13 +101,13 @@ function RoutineItem({
 }) {
   return (
     <TouchableOpacity
-      className={`flex-row items-center p-5 rounded-2xl bg-card mb-3 border border-stone-50 ${done ? "opacity-50" : ""}`}
+      className={`flex-row items-center p-5 rounded-2xl bg-card mb-3 border border-border-soft ${done ? "opacity-50" : ""}`}
       style={{ elevation: 2 }}
     >
       <View
-        className={`w-10 h-10 rounded-full items-center justify-center mr-4 ${done ? "bg-secondary" : "bg-stone-100"}`}
+        className={`w-10 h-10 rounded-full items-center justify-center mr-4 ${done ? "bg-secondary" : "bg-muted"}`}
       >
-        <Feather name={icon} size={20} color={done ? "white" : "#948B83"} />
+        <Feather name={icon} size={20} color={done ? "white" : "#7C736C"} />
       </View>
       <View className="flex-1">
         <Text
@@ -112,7 +118,7 @@ function RoutineItem({
         <Text className="text-text-sub text-xs">{time}</Text>
       </View>
       <View
-        className={`w-6 h-6 rounded-full border-2 items-center justify-center ${done ? "bg-primary border-primary" : "border-stone-200"}`}
+        className={`w-6 h-6 rounded-full border-2 items-center justify-center ${done ? "bg-primary border-primary" : "border-border-soft"}`}
       >
         {done && <Feather name="check" size={14} color="white" />}
       </View>

@@ -6,18 +6,20 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#E9967A", // primary 색상
-        tabBarInactiveTintColor: "#948B83", // text-sub 색상
+        tabBarActiveTintColor: "#E08162", // primary 색상
+        tabBarInactiveTintColor: "#7C736C", // text-sub 색상
         tabBarStyle: {
-          backgroundColor: "#FFFFFF",
-          borderTopWidth: 0,
-          elevation: 10,
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.05,
-          shadowRadius: 10,
-          height: 60,
-          paddingBottom: 10,
+          backgroundColor: "#FFFCF8",
+          borderTopWidth: 1,
+          borderTopColor: "#F0E6DD",
+          elevation: 12,
+          shadowColor: "#5A3F33",
+          shadowOffset: { width: 0, height: -6 },
+          shadowOpacity: 0.08,
+          shadowRadius: 16,
+          height: 68,
+          paddingBottom: 12,
+          paddingTop: 8,
         },
         headerShown: false, // 커스텀 헤더를 쓸 것이므로 기본 헤더는 숨김
       }}

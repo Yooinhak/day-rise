@@ -57,8 +57,18 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <Stack>
+        {/* 메인 탭 화면 */}
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+
+        {/* 추가하기 화면을 모달로 설정 */}
+        <Stack.Screen
+          name="create"
+          options={{
+            presentation: "modal", // 아래에서 위로 올라오는 애니메이션
+            headerShown: false, // 커스텀 헤더를 쓸 것이므로 기본 헤더 숨김
+            contentStyle: { backgroundColor: "#FBF6F0" }, // 배경색 유지
+          }}
+        />
       </Stack>
     </ThemeProvider>
   );
