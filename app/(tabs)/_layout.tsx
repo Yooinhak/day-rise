@@ -13,10 +13,7 @@ export default function TabLayout() {
           borderTopWidth: 1,
           borderTopColor: "#F0E6DD",
           elevation: 12,
-          shadowColor: "#5A3F33",
-          shadowOffset: { width: 0, height: -6 },
-          shadowOpacity: 0.08,
-          shadowRadius: 16,
+          boxShadow: "0px -6px 16px rgba(90, 63, 51, 0.08)",
           height: 68,
           paddingBottom: 12,
           paddingTop: 8,
@@ -43,7 +40,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile" // 파일명을 profile.tsx로 바꿀 예정입니다
+        name="profile"
         options={{
           title: "마이",
           tabBarIcon: ({ color }) => (
