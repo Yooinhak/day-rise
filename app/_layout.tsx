@@ -7,14 +7,11 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import { Stack, useRouter, useSegments } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
-import { useEffect, useState } from "react";
+import { SplashScreen, Stack } from "expo-router";
+import { useEffect } from "react";
 // import 'react-native-reanimated';
 
 import { useColorScheme } from "@/components/useColorScheme";
-import { supabase } from "@/lib/supabase";
-import { Session } from "@supabase/supabase-js";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -27,7 +24,7 @@ export const unstable_settings = {
 };
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -42,7 +39,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (loaded) {
-      SplashScreen.hideAsync();
+      SplashScreen.hideAsync().catch(() => {});
     }
   }, [loaded]);
 
@@ -55,37 +52,6 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
-  const [session, setSession] = useState<Session | null>(null);
-  const segments = useSegments();
-  const router = useRouter();
-
-  useEffect(() => {
-    // 1. 현재 세션 확인
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
-
-    // 2. 로그인 상태 변화 감지
-    supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-  }, []);
-
-  useEffect(() => {
-    const inAppRoutes = segments[0] === "(tabs)" || segments[0] === "create";
-    const inLoginRoute = segments[0] === "login";
-
-    if (!session && !inLoginRoute) {
-      // 세션이 없으면 로그인 페이지로 이동
-      router.replace("/login");
-    } else if (session && inLoginRoute) {
-      // 세션이 있는데 로그인 페이지에 있다면 메인 화면으로 이동
-      router.replace("/(tabs)");
-    } else if (session && !inAppRoutes && !inLoginRoute) {
-      // 알 수 없는 비앱 경로는 메인 화면으로 정리
-      router.replace("/(tabs)");
-    }
-  }, [session, segments, router]);
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
