@@ -1,5 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { format, isValid, parse, set } from "date-fns";
+import { ko } from "date-fns/locale";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -12,14 +14,15 @@ import {
   View,
 } from "react-native";
 import { supabase } from "../lib/supabase"; // 설정해둔 supabase 클라이언트
-import { TablesInsert } from "../types/database.types";
+import { Enums, TablesInsert } from "../types/database.types";
 
 // 1. 폼 데이터 타입 정의
 type RoutineInsert = TablesInsert<"routines">;
+type RoutineFrequency = Enums<"frequency_type">;
 
 interface RoutineFormValues {
   title: RoutineInsert["title"];
-  frequency: NonNullable<RoutineInsert["frequency"]>;
+  frequency: RoutineFrequency;
   target_count: NonNullable<RoutineInsert["target_count"]>;
   reminder_time: RoutineInsert["reminder_time"];
 }
@@ -66,7 +69,7 @@ export default function CreateRoutineScreen() {
     }
   };
 
-  const frequencies: { id: RoutineFormValues["frequency"]; label: string }[] = [
+  const frequencies: { id: RoutineFrequency; label: string }[] = [
     { id: "daily", label: "매일" },
     { id: "weekly", label: "매주" },
     { id: "monthly", label: "매달" },
@@ -92,34 +95,21 @@ export default function CreateRoutineScreen() {
   }, [frequency, maxTargetCount, setValue, targetCount]);
 
   const parseTimeToDate = (value: string | null | undefined) => {
-    const now = new Date();
-    if (!value) {
-      now.setHours(9, 0, 0, 0);
-      return now;
-    }
-    const [hh, mm, ss] = value.split(":").map((part) => Number(part));
-    if (Number.isNaN(hh) || Number.isNaN(mm)) {
-      now.setHours(9, 0, 0, 0);
-      return now;
-    }
-    now.setHours(hh, mm, Number.isNaN(ss) ? 0 : ss, 0);
-    return now;
+    const fallback = set(new Date(), { hours: 9, minutes: 0, seconds: 0 });
+    if (!value) return fallback;
+    const parsed = parse(value, "HH:mm:ss", new Date());
+    return isValid(parsed) ? parsed : fallback;
   };
 
   const timeToString = (date: Date) => {
-    const hours = String(date.getHours()).padStart(2, "0");
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    return `${hours}:${minutes}:00`;
+    return format(date, "HH:mm':00'");
   };
 
   const formatTimeLabel = (value: string | null | undefined) => {
     if (!value) return "시간 선택";
-    const [hh, mm] = value.split(":");
-    const hours = Number(hh);
-    if (Number.isNaN(hours)) return "시간 선택";
-    const period = hours < 12 ? "오전" : "오후";
-    const displayHour = hours % 12 === 0 ? 12 : hours % 12;
-    return `${period} ${String(displayHour).padStart(2, "0")}:${mm}`;
+    const parsed = parse(value, "HH:mm:ss", new Date());
+    if (!isValid(parsed)) return "시간 선택";
+    return format(parsed, "a hh:mm", { locale: ko });
   };
 
   return (

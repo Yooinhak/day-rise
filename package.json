@@ -4,8 +4,9 @@
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "ios2": "expo run:ios --device '유인학의 iPhone'",
     "web": "expo start --web",
     "update-types": "npx supabase gen types typescript --project-id flgiazqbdmcuovcpglpd --schema public > types/database.types.ts"
   },
@@ -15,6 +16,8 @@
     "@react-native-community/datetimepicker": "8.4.4",
     "@react-navigation/native": "^7.1.8",
     "@supabase/supabase-js": "^2.89.0",
+    "@tanstack/react-query": "^5.90.16",
+    "date-fns": "^4.1.0",
     "expo": "^54.0.31",
     "expo-auth-session": "~7.0.10",
     "expo-constants": "~18.0.13",

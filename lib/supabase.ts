@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
+import type { Database } from "@/types/database.types";
 import { Platform } from "react-native";
 import "react-native-url-polyfill/auto";
 
@@ -27,7 +28,7 @@ const storage =
       : memoryStorage()
     : AsyncStorage;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage,
     flowType: "pkce",

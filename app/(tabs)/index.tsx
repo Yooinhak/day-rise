@@ -1,32 +1,146 @@
 // app/(tabs)/index.tsx
+import { supabase } from "@/lib/supabase";
+import { Tables } from "@/types/database.types";
 import { Feather } from "@expo/vector-icons";
+import { useQuery } from "@tanstack/react-query";
+import {
+  format,
+  isAfter,
+  startOfDay,
+  startOfMonth,
+  startOfWeek,
+} from "date-fns";
+import { ko } from "date-fns/locale";
 import { router } from "expo-router";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import "../../global.css";
 
+type RoutineRow = Tables<"routines">;
+type RoutineLogRow = Tables<"routine_logs">;
+type HomeRoutine = RoutineRow & {
+  routine_logs: Pick<RoutineLogRow, "id" | "completed_at">[] | null;
+};
+
+// 데이터 페칭 함수
+const fetchHomeData = async () => {
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
+
+  if (sessionError) throw sessionError;
+
+  let user = session?.user ?? null;
+
+  if (!user) {
+    const {
+      data: { user: fetchedUser },
+      error: userError,
+    } = await supabase.auth.getUser();
+    if (userError) throw userError;
+    user = fetchedUser ?? null;
+  }
+
+  if (!user) return null;
+
+  const userName =
+    user.user_metadata?.name ||
+    user.user_metadata?.full_name ||
+    user.user_metadata?.nickname ||
+    user.email?.split("@")[0] ||
+    "친구";
+
+  // 루틴과 해당 루틴의 로그들을 한 번에 가져옵니다. (Inner Join 느낌)
+  const { data: routines, error } = await supabase
+    .from("routines")
+    .select(
+      `
+      *,
+      routine_logs (
+        id,
+        completed_at
+      )
+    `
+    )
+    .eq("user_id", user.id)
+    .eq("is_active", true)
+    .returns<HomeRoutine[]>();
+
+  if (error) throw error;
+  return { routines, userName };
+};
+
 export default function HomeScreen() {
-  const dailyRoutines = [
-    { title: "아침 물 한잔", time: "오전 7:00", icon: "droplet", done: true },
-    { title: "명상 10분", time: "오전 7:30", icon: "wind", done: true },
-    { title: "비타민 먹기", time: "오전 8:30", icon: "sun", done: false },
-    { title: "독서 30분", time: "오후 10:00", icon: "book-open", done: false },
-  ];
-  const periodicGoals = [
-    {
-      title: "이번 주 독서",
-      period: "weekly",
-      progress: 1,
-      goal: 3,
-      caption: "여유 있을 때 한 번씩",
-    },
-    {
-      title: "이번 달 등산",
-      period: "monthly",
-      progress: 0,
-      goal: 1,
-      caption: "긴 호흡의 목표",
-    },
-  ];
+  const { data, isLoading } = useQuery({
+    queryKey: ["home-routines"],
+    queryFn: fetchHomeData,
+  });
+
+  if (isLoading) return <View className="flex-1 bg-bg-warm" />; // 로딩 스켈레톤 등을 넣으면 좋습니다.
+
+  // --- 데이터 가공 로직 ---
+  const routines = data?.routines ?? [];
+  const userName = data?.userName ?? "친구";
+  const now = new Date();
+  const todayStart = startOfDay(now);
+  const weekStart = startOfWeek(now);
+  const monthStart = startOfMonth(now);
+  const todayLabel = format(now, "M월 d일 EEEE", { locale: ko });
+
+  // 1. 매일 루틴 가공
+  const dailyRoutines =
+    routines
+      ?.filter((r) => r.frequency === "daily")
+      .map((r) => ({
+        id: r.id,
+        title: r.title,
+        time: r.reminder_time?.substring(0, 5) || "시간 미설정",
+        done:
+          (r.routine_logs ?? []).some((log) =>
+            isAfter(new Date(log.completed_at), todayStart)
+          ) ?? false,
+      })) || [];
+
+  // 2. 주기별 목표 가공 (주간/월간)
+  const periodicGoals =
+    routines
+      ?.filter((r) => r.frequency !== "daily")
+      .map((r) => {
+        const start = r.frequency === "weekly" ? weekStart : monthStart;
+        const progress = (r.routine_logs ?? []).filter((log) =>
+          isAfter(new Date(log.completed_at), start)
+        ).length;
+
+        return {
+          id: r.id,
+          title: r.title,
+          period: r.frequency,
+          progress,
+          goal: r.target_count,
+          caption: r.frequency === "weekly" ? "이번 주 목표" : "이번 달 목표",
+        };
+      }) || [];
+
+  // 3. 오늘의 정원 달성률 계산
+  const totalDaily = dailyRoutines.length;
+  const completedDaily = dailyRoutines.filter((r) => r.done).length;
+  // 보너스: 오늘 완료한 주간/월간 루틴 수
+  const bonusCount =
+    routines?.filter(
+      (r) =>
+        r.frequency !== "daily" &&
+        (r.routine_logs ?? []).some((log) =>
+          isAfter(new Date(log.completed_at), todayStart)
+        )
+    ).length || 0;
+
+  const gardenProgress =
+    totalDaily > 0
+      ? Math.min(
+          100,
+          Math.round(((completedDaily + bonusCount) / totalDaily) * 100)
+        )
+      : 0;
 
   return (
     <View className="flex-1 bg-bg-warm px-6 pt-16">
@@ -34,10 +148,10 @@ export default function HomeScreen() {
       <View className="flex-row justify-between items-start mb-6">
         <View>
           <Text className="text-text-sub text-sm font-medium">
-            1월 6일 월요일
+            {todayLabel}
           </Text>
           <Text className="text-text-main text-2xl font-bold mt-1">
-            오늘도 멋진 하루를{"\n"}만들어봐요, 지민님! 🌿
+            오늘도 멋진 하루를{"\n"}만들어봐요, {userName}님! 🌿
           </Text>
         </View>
         <TouchableOpacity className="bg-card p-3 rounded-full border border-border-soft shadow-sm">
@@ -53,7 +167,7 @@ export default function HomeScreen() {
               오늘의 정원
             </Text>
             <Text className="text-text-main text-xl font-bold">
-              지민님의 정원이 80%{"\n"}따뜻해졌어요
+              {`${userName}님의 정원이 ${gardenProgress}%\n따뜻해졌어요`}
             </Text>
             <Text className="text-text-main/70 text-sm mt-2">
               보너스 루틴은 100%를 넘겨도 기록돼요
@@ -127,12 +241,10 @@ export default function HomeScreen() {
 function RoutineItem({
   title,
   time,
-  icon,
   done,
 }: {
   title: string;
   time: string;
-  icon: any;
   done: boolean;
 }) {
   return (
