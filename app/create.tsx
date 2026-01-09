@@ -3,6 +3,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { format, isValid, parse, set } from "date-fns";
 import { ko } from "date-fns/locale";
 import { router } from "expo-router";
+import { useQueryClient } from "@tanstack/react-query";
 import React, { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
@@ -29,6 +30,7 @@ interface RoutineFormValues {
 
 export default function CreateRoutineScreen() {
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const queryClient = useQueryClient();
 
   const {
     control,
@@ -52,6 +54,18 @@ export default function CreateRoutineScreen() {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("로그인이 필요합니다.");
 
+      const { data: orderData, error: orderError } = await supabase
+        .from("routines")
+        .select("sort_order")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .order("sort_order", { ascending: false })
+        .limit(1);
+
+      if (orderError) throw orderError;
+
+      const nextSortOrder = (orderData?.[0]?.sort_order ?? -1) + 1;
+
       // 3. 이제 .from("routines").insert()를 작성할 때
       // 컬럼명 자동 완성 및 타입 체크가 작동합니다!
       const { error } = await supabase.from("routines").insert({
@@ -60,9 +74,11 @@ export default function CreateRoutineScreen() {
         frequency: data.frequency,
         target_count: data.target_count,
         reminder_time: data.reminder_time,
+        sort_order: nextSortOrder,
       });
 
       if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["home-routines"] });
       router.back();
     } catch (error: any) {
       alert(error.message);

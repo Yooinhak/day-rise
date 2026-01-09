@@ -1,25 +1,20 @@
 import { supabase } from "@/lib/supabase";
-import { makeRedirectUri } from "expo-auth-session";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import React from "react";
-import { Platform, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 
 WebBrowser.maybeCompleteAuthSession(); // 웹 브라우저 인증 후 복귀를 위함
 
 export default function LoginScreen() {
   async function signInWithGoogle() {
-    const redirectTo = makeRedirectUri({
-      native: "day-rise://google-auth",
-      path: "google-auth",
-      preferLocalhost: true,
-    });
+    const redirectUrl = Linking.createURL("google-auth");
 
     // 1. Supabase를 통해 구글 로그인 URL 가져오기
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo,
+        redirectTo: redirectUrl,
         skipBrowserRedirect: true,
       },
     });
@@ -28,24 +23,21 @@ export default function LoginScreen() {
 
     // 2. 외부 브라우저로 로그인 페이지 열기
     if (data?.url) {
-      if (Platform.OS === "web" && typeof window !== "undefined") {
-        window.location.assign(data.url);
-        return;
-      }
-
       const result = await WebBrowser.openAuthSessionAsync(
         data.url,
-        redirectTo
+        redirectUrl
       );
+
       if (result.type === "success" && result.url) {
-        const parsed = Linking.parse(result.url);
-        const code = parsed.queryParams?.code;
-        if (typeof code === "string") {
+        // PKCE flow: URL에서 code를 추출하여 세션으로 교환
+        const { queryParams } = Linking.parse(result.url);
+        const code = queryParams?.code;
+
+        if (code) {
           const { error: exchangeError } =
-            await supabase.auth.exchangeCodeForSession(code);
-          if (exchangeError) {
+            await supabase.auth.exchangeCodeForSession(code as string);
+          if (exchangeError)
             console.log("Session Error:", exchangeError.message);
-          }
         }
       }
     }

@@ -1,4 +1,5 @@
 import "../global.css";
+import "react-native-gesture-handler";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import {
@@ -11,6 +12,7 @@ import { SplashScreen, Stack, useRouter, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
 // import 'react-native-reanimated';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { useColorScheme } from "@/components/useColorScheme";
 import { supabase } from "@/lib/supabase";
@@ -112,26 +114,28 @@ function RootLayoutNav() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <Stack>
-          {/* 인증 플로우 */}
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+          <Stack>
+            {/* 인증 플로우 */}
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
 
-          {/* 메인 탭 화면 */}
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            {/* 메인 탭 화면 */}
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
-          {/* 추가하기 화면을 모달로 설정 */}
-          <Stack.Screen
-            name="create"
-            options={{
-              presentation: "modal", // 아래에서 위로 올라오는 애니메이션
-              headerShown: false, // 커스텀 헤더를 쓸 것이므로 기본 헤더 숨김
-              contentStyle: { backgroundColor: "#FBF6F0" }, // 배경색 유지
-            }}
-          />
-        </Stack>
-      </ThemeProvider>
-    </QueryClientProvider>
+            {/* 추가하기 화면을 모달로 설정 */}
+            <Stack.Screen
+              name="create"
+              options={{
+                presentation: "modal", // 아래에서 위로 올라오는 애니메이션
+                headerShown: false, // 커스텀 헤더를 쓸 것이므로 기본 헤더 숨김
+                contentStyle: { backgroundColor: "#FBF6F0" }, // 배경색 유지
+              }}
+            />
+          </Stack>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }

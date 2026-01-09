@@ -49,30 +49,36 @@ export type Database = {
       routines: {
         Row: {
           created_at: string | null;
+          deactivated_at: string | null;
           frequency: Database["public"]["Enums"]["frequency_type"];
           id: string;
           is_active: boolean | null;
           reminder_time: string | null;
+          sort_order: number | null;
           target_count: number;
           title: string;
           user_id: string;
         };
         Insert: {
           created_at?: string | null;
+          deactivated_at?: string | null;
           frequency?: Database["public"]["Enums"]["frequency_type"];
           id?: string;
           is_active?: boolean | null;
           reminder_time?: string | null;
+          sort_order?: number | null;
           target_count?: number;
           title: string;
           user_id: string;
         };
         Update: {
           created_at?: string | null;
+          deactivated_at?: string | null;
           frequency?: Database["public"]["Enums"]["frequency_type"];
           id?: string;
           is_active?: boolean | null;
           reminder_time?: string | null;
+          sort_order?: number | null;
           target_count?: number;
           title?: string;
           user_id?: string;
@@ -84,7 +90,8 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      get_date_immutable: { Args: { ts: string }; Returns: string };
+      update_routine_order: { Args: { payload: Json }; Returns: undefined };
     };
     Enums: {
       frequency_type: "daily" | "weekly" | "monthly" | "yearly";
