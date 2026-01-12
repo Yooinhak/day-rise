@@ -1,8 +1,22 @@
 // app/(tabs)/stats.tsx
 import { Feather } from "@expo/vector-icons";
-import { ScrollView, Text, View } from "react-native";
+import { useState } from "react";
+import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { supabase } from "@/lib/supabase";
 
 export default function StatsScreen() {
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
+  async function handleSignOut() {
+    if (isSigningOut) return;
+    setIsSigningOut(true);
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      Alert.alert("로그아웃 실패", error.message);
+    }
+    setIsSigningOut(false);
+  }
+
   return (
     <ScrollView className="flex-1 bg-bg-warm px-6 pt-16">
       <Text className="text-text-main text-2xl font-bold mb-6">
@@ -58,6 +72,27 @@ export default function StatsScreen() {
           <BadgeItem icon="zap" label="3일 연속" color="bg-accent" />
           <BadgeItem icon="moon" label="밤의 요정" color="bg-primary/15" />
           <BadgeItem icon="heart" label="자기관리" color="bg-secondary/15" />
+        </View>
+      </View>
+
+      <View className="mb-10">
+        <Text className="text-text-main text-lg font-bold mb-4">계정</Text>
+        <View className="bg-card border border-border-soft rounded-2xl p-5 shadow-sm">
+          <Text className="text-text-sub text-sm mb-4">
+            안전하게 로그아웃하고 휴식 시간을 가져요.
+          </Text>
+          <TouchableOpacity
+            onPress={handleSignOut}
+            disabled={isSigningOut}
+            className={`flex-row items-center justify-center rounded-2xl px-4 py-4 ${
+              isSigningOut ? "bg-primary/50" : "bg-primary"
+            } shadow-lg shadow-primary/30`}
+          >
+            <Feather name="log-out" size={18} color="white" />
+            <Text className="text-white font-bold text-base ml-2">
+              {isSigningOut ? "로그아웃 중..." : "로그아웃"}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
     </ScrollView>
