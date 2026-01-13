@@ -2,6 +2,7 @@ import { ConfirmActionModal } from "@/components/home/ConfirmActionModal";
 import { HomeSummaryCard } from "@/components/home/HomeSummaryCard";
 import { PeriodicGoalCard } from "@/components/home/PeriodicGoalCard";
 import { RoutineItem } from "@/components/home/RoutineItem";
+import { useAppTheme } from "@/components/theme/AppThemeProvider";
 import { supabase } from "@/lib/supabase";
 import { Tables } from "@/types/database.types";
 import { Feather } from "@expo/vector-icons";
@@ -67,6 +68,8 @@ const fetchHomeData = async () => {
 };
 
 export default function HomeScreen() {
+  const { theme } = useAppTheme();
+  const c = theme.classes;
   const queryClient = useQueryClient();
   const [cancelTarget, setCancelTarget] = useState<{
     logId: string;
@@ -162,7 +165,7 @@ export default function HomeScreen() {
   const userName = data?.userName ?? "친구";
   const now = new Date();
   const todayStart = startOfDay(now);
-  const weekStart = startOfWeek(now);
+  const weekStart = startOfWeek(now, { weekStartsOn: 1 });
   const monthStart = startOfMonth(now);
   const todayLabel = format(now, "M월 d일 EEEE", { locale: ko });
 
@@ -172,7 +175,7 @@ export default function HomeScreen() {
     }
   }, [routines]);
 
-  if (isLoading) return <View className="flex-1 bg-bg-warm" />;
+  if (isLoading) return <View className={`flex-1 ${c.bg}`} />;
 
   const getTodayLogId = (routine: HomeRoutine) =>
     (routine.routine_logs ?? []).find((log) =>
@@ -195,7 +198,7 @@ export default function HomeScreen() {
   // 2. 주기별 목표 가공 (주간/월간)
   const periodicGoals = orderedRoutines.filter((r) => r.frequency !== "daily");
 
-  // 3. 오늘의 정원 달성률 계산 (LaTeX 수식 참고)
+  // 3. 오늘의 목표 달성률 계산 (LaTeX 수식 참고)
   // $$\text{gardenProgress} = \frac{\text{completedDaily} + \text{bonusCount}}{\text{totalDaily}} \times 100$$
   const totalDaily = dailyRoutines.length;
   const completedDaily = dailyRoutines.filter((r) => isDoneToday(r)).length;
@@ -203,18 +206,18 @@ export default function HomeScreen() {
     totalDaily > 0 ? Math.round((completedDaily / totalDaily) * 100) : 0;
 
   return (
-    <View className="flex-1 bg-bg-warm px-6 pt-16">
+    <View className={`flex-1 ${c.bg} px-6 pt-16`}>
       <View className="flex-row justify-between items-start mb-6">
         <View>
-          <Text className="text-text-sub text-sm font-medium">
+          <Text className={`${c.textSub} text-sm font-medium`}>
             {todayLabel}
           </Text>
-          <Text className="text-text-main text-2xl font-bold mt-1">
+          <Text className={`${c.textMain} text-2xl font-bold mt-1`}>
             오늘도 멋진 하루를{"\n"}만들어봐요, {userName}님! 🌿
           </Text>
         </View>
         {/* <TouchableOpacity className="bg-card p-3 rounded-full border border-border-soft shadow-sm">
-          <Feather name="bell" size={20} color="#3C322B" />
+          <Feather name="bell" size={20} color={theme.colors.textMain} />
         </TouchableOpacity> */}
       </View>
 
@@ -223,7 +226,7 @@ export default function HomeScreen() {
         refreshControl={
           isEditing ? undefined : (
             <RefreshControl
-              tintColor="#9A7E6F"
+              tintColor={theme.colors.primary}
               refreshing={isFetching}
               onRefresh={refetch}
             />
@@ -241,18 +244,18 @@ export default function HomeScreen() {
         <View className="mb-6">
           <View className="flex-row justify-between items-end mb-4">
             <View>
-              <Text className="text-text-main text-xl font-bold">
+              <Text className={`${c.textMain} text-xl font-bold`}>
                 오늘 꼭 해야 할 루틴
               </Text>
-              <Text className="text-text-sub text-xs mt-1">
+              <Text className={`${c.textSub} text-xs mt-1`}>
                 매일 루틴은 자정에 리셋돼요
               </Text>
             </View>
             <TouchableOpacity
               onPress={() => setIsEditing((prev) => !prev)}
-              className="px-3 py-1 rounded-full bg-card border border-border-soft"
+              className={`px-3 py-1 rounded-full ${c.card} border ${c.borderSoft}`}
             >
-              <Text className="text-text-sub text-xs font-medium">
+              <Text className={`${c.textSub} text-xs font-medium`}>
                 {isEditing ? "완료" : "편집"}
               </Text>
             </TouchableOpacity>
@@ -346,7 +349,7 @@ export default function HomeScreen() {
 
         <View className="mb-24">
           <View className="mb-4">
-            <Text className="text-text-main text-xl font-bold">
+            <Text className={`${c.textMain} text-xl font-bold`}>
               이번 주/달에 채워야 할 목표
             </Text>
           </View>
@@ -463,7 +466,7 @@ export default function HomeScreen() {
 
       <TouchableOpacity
         onPress={() => router.push("/create")}
-        className="absolute bottom-6 right-6 w-14 h-14 bg-primary rounded-full items-center justify-center shadow-lg shadow-primary/40"
+        className={`absolute bottom-6 right-6 w-14 h-14 ${c.primaryBg} rounded-full items-center justify-center shadow-lg ${c.shadowPrimary40}`}
       >
         <Feather name="plus" size={30} color="white" />
       </TouchableOpacity>

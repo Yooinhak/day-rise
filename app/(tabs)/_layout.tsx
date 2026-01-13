@@ -2,18 +2,21 @@ import { Feather } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import React from "react";
 
+import { useAppTheme } from "@/components/theme/AppThemeProvider";
+
 export default function TabLayout() {
+  const { theme } = useAppTheme();
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#E08162", // primary 색상
-        tabBarInactiveTintColor: "#7C736C", // text-sub 색상
+        tabBarActiveTintColor: theme.colors.primary, // primary 색상
+        tabBarInactiveTintColor: theme.colors.textSub, // text-sub 색상
         tabBarStyle: {
-          backgroundColor: "#FFFCF8",
+          backgroundColor: theme.colors.card,
           borderTopWidth: 1,
-          borderTopColor: "#F0E6DD",
+          borderTopColor: theme.colors.border,
           elevation: 12,
-          boxShadow: "0px -6px 16px rgba(90, 63, 51, 0.08)",
+          boxShadow: `0px -6px 16px ${theme.colors.tabShadow}`,
           height: 68,
           paddingBottom: 12,
           paddingTop: 8,

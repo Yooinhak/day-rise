@@ -3,10 +3,13 @@ import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
+import { useAppTheme } from "@/components/theme/AppThemeProvider";
 
 WebBrowser.maybeCompleteAuthSession(); // 웹 브라우저 인증 후 복귀를 위함
 
 export default function LoginScreen() {
+  const { theme } = useAppTheme();
+  const c = theme.classes;
   async function signInWithGoogle() {
     const redirectUrl = Linking.createURL("google-auth");
 
@@ -44,19 +47,19 @@ export default function LoginScreen() {
   }
 
   return (
-    <View className="flex-1 bg-bg-warm justify-center px-8">
+    <View className={`flex-1 ${c.bg} justify-center px-8`}>
       <View className="items-center mb-12">
         <Text className="text-4xl mb-4">🌿</Text>
-        <Text className="text-text-main text-2xl font-bold text-center">
-          나를 보듬는 시간,{"\n"}갓생 정원에 오신 걸 환영해요
+        <Text className={`${c.textMain} text-2xl font-bold text-center`}>
+          나를 보듬는 시간,{"\n"}Day Rise에 오신 걸 환영해요
         </Text>
       </View>
 
       <TouchableOpacity
         onPress={signInWithGoogle}
-        className="bg-white p-5 rounded-2xl flex-row items-center justify-center shadow-sm border border-stone-100"
+        className={`${c.card} p-5 rounded-2xl flex-row items-center justify-center shadow-sm border ${c.borderSoft}`}
       >
-        <Text className="text-text-main font-bold text-lg">
+        <Text className={`${c.textMain} font-bold text-lg`}>
           구글로 시작하기
         </Text>
       </TouchableOpacity>

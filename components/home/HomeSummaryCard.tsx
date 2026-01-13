@@ -1,4 +1,5 @@
 import { Text, View } from "react-native";
+import { useAppTheme } from "@/components/theme/AppThemeProvider";
 
 type HomeSummaryCardProps = {
   gardenProgress: number;
@@ -13,38 +14,46 @@ export function HomeSummaryCard({
   totalDaily,
   userName,
 }: HomeSummaryCardProps) {
+  const { theme } = useAppTheme();
+  const c = theme.classes;
   return (
-    <View className="bg-primary/10 p-5 rounded-2xl mb-6 border border-primary/20">
+    <View
+      className={`${c.primaryBg10} p-5 rounded-2xl mb-6 border ${c.primaryBorder20}`}
+    >
       <View className="flex-row items-start justify-between">
         <View className="flex-1 pr-4">
-          <Text className="text-text-sub text-xs font-medium mb-1">
-            오늘의 정원
+          <Text className={`${c.textSub} text-xs font-medium mb-1`}>
+            오늘의 성취
           </Text>
-          <Text className="text-text-main text-xl font-bold">
+          <Text className={`${c.textMain} text-xl font-bold`}>
             {gardenProgress >= 100
-              ? `${userName}님의 정원이\n완전 따뜻해졌어요! 🌸`
-              : `${userName}님의 정원이 ${gardenProgress}%\n따뜻해졌어요`}
+              ? `${userName}님, 오늘 목표를\n완벽하게 달성했어요! 🌟`
+              : `${userName}님, 오늘 목표의 ${gardenProgress}%를\n해냈어요`}
           </Text>
-          <Text className="text-text-main/70 text-sm mt-2">
+          <Text className={`${c.textMain} text-sm mt-2 opacity-70`}>
             오늘 목표 기준으로 달성률이 계산돼요
           </Text>
         </View>
-        <View className="w-14 h-14 rounded-full border-4 border-primary items-center justify-center bg-card">
-          <Text className="text-primary font-bold text-xs">
+        <View
+          className={`w-14 h-14 rounded-full border-4 ${c.primaryBorder} items-center justify-center ${c.card}`}
+        >
+          <Text className={`${c.primaryText} font-bold text-xs`}>
             {completedDaily}/{totalDaily}
           </Text>
         </View>
       </View>
       <View className="mt-4">
-        <View className="h-2 bg-card rounded-full overflow-hidden border border-border-soft">
+        <View
+          className={`h-2 ${c.card} rounded-full overflow-hidden border ${c.borderSoft}`}
+        >
           <View
-            className="h-full bg-primary rounded-full"
+            className={`h-full ${c.primaryBg} rounded-full`}
             style={{ width: `${Math.min(100, gardenProgress)}%` }}
           />
         </View>
         <View className="flex-row justify-between mt-2">
-          <Text className="text-text-sub text-xs">오늘의 달성률</Text>
-          <Text className="text-primary text-xs font-bold">
+          <Text className={`${c.textSub} text-xs`}>오늘의 달성률</Text>
+          <Text className={`${c.primaryText} text-xs font-bold`}>
             {gardenProgress}%
           </Text>
         </View>

@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useAppTheme } from "@/components/theme/AppThemeProvider";
 import { supabase } from "../lib/supabase"; // 설정해둔 supabase 클라이언트
 import { Enums, TablesInsert } from "../types/database.types";
 
@@ -31,6 +32,8 @@ interface RoutineFormValues {
 export default function CreateRoutineScreen() {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const queryClient = useQueryClient();
+  const { theme } = useAppTheme();
+  const c = theme.classes;
 
   const {
     control,
@@ -129,19 +132,19 @@ export default function CreateRoutineScreen() {
   };
 
   return (
-    <View className="flex-1 bg-bg-warm px-6 pt-12">
+    <View className={`flex-1 ${c.bg} px-6 pt-12`}>
       <TouchableOpacity onPress={() => router.back()} className="mb-4">
-        <Feather name="x" size={24} color="#3C322B" />
+        <Feather name="x" size={24} color={theme.colors.textMain} />
       </TouchableOpacity>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        <Text className="text-text-main text-2xl font-bold mb-8">
+        <Text className={`${c.textMain} text-2xl font-bold mb-8`}>
           어떤 습관을{"\n"}만들어볼까요? ✨
         </Text>
 
         {/* 1. 목표 이름 입력 */}
         <View className="mb-8">
-          <Text className="text-text-sub mb-3 font-medium">목표 이름</Text>
+          <Text className={`${c.textSub} mb-3 font-medium`}>목표 이름</Text>
           <Controller
             control={control}
             name="title"
@@ -152,10 +155,10 @@ export default function CreateRoutineScreen() {
                 onBlur={onBlur}
                 onChangeText={onChange}
                 value={value}
-                className={`bg-card p-5 rounded-2xl text-text-main text-lg border ${
-                  errors.title ? "border-red-400" : "border-border-soft"
+                className={`${c.card} p-5 rounded-2xl ${c.textMain} text-lg border ${
+                  errors.title ? "border-red-400" : c.borderSoft
                 } shadow-sm`}
-                placeholderTextColor="#7C736C"
+                placeholderTextColor={theme.colors.textSub}
               />
             )}
           />
@@ -168,24 +171,26 @@ export default function CreateRoutineScreen() {
 
         {/* 2. 주기 선택 */}
         <View className="mb-8">
-          <Text className="text-text-sub mb-3 font-medium">
+          <Text className={`${c.textSub} mb-3 font-medium`}>
             얼마나 자주 할까요?
           </Text>
           <Controller
             control={control}
             name="frequency"
             render={({ field: { onChange, value } }) => (
-              <View className="flex-row justify-between bg-muted p-1.5 rounded-2xl border border-border-soft">
+              <View
+                className={`flex-row justify-between ${c.mutedBg} p-1.5 rounded-2xl border ${c.borderSoft}`}
+              >
                 {frequencies.map((f) => (
                   <TouchableOpacity
                     key={f.id}
                     onPress={() => onChange(f.id)}
                     className={`flex-1 py-3 rounded-xl items-center ${
-                      value === f.id ? "bg-card border border-border-soft" : ""
+                      value === f.id ? `${c.card} border ${c.borderSoft}` : ""
                     }`}
                   >
                     <Text
-                      className={`font-bold ${value === f.id ? "text-primary" : "text-text-sub"}`}
+                      className={`font-bold ${value === f.id ? c.primaryText : c.textSub}`}
                     >
                       {f.label}
                     </Text>
@@ -198,12 +203,12 @@ export default function CreateRoutineScreen() {
 
         {/* 3. 상세 설정 */}
         <View className="mb-10">
-          <Text className="text-text-sub mb-3 font-medium">세부 설정</Text>
-          <View className="bg-card p-5 rounded-2xl border border-border-soft">
+          <Text className={`${c.textSub} mb-3 font-medium`}>세부 설정</Text>
+          <View className={`${c.card} p-5 rounded-2xl border ${c.borderSoft}`}>
             {frequency !== "daily" && (
               <>
                 <View className="flex-row justify-between items-center mb-4">
-                  <Text className="text-text-main">목표 횟수</Text>
+                  <Text className={c.textMain}>목표 횟수</Text>
                   <Controller
                     control={control}
                     name="target_count"
@@ -213,24 +218,26 @@ export default function CreateRoutineScreen() {
                           onPress={() =>
                             onChange(Math.max(1, value - 1))
                           }
-                          className="w-8 h-8 bg-muted rounded-full items-center justify-center border border-border-soft"
+                          className={`w-8 h-8 ${c.mutedBg} rounded-full items-center justify-center border ${c.borderSoft}`}
                         >
-                          <Feather name="minus" size={16} color="#3C322B" />
+                          <Feather name="minus" size={16} color={theme.colors.textMain} />
                         </TouchableOpacity>
-                        <Text className="mx-4 font-bold text-lg">{value}회</Text>
+                        <Text className={`${c.textMain} mx-4 font-bold text-lg`}>
+                          {value}회
+                        </Text>
                         <TouchableOpacity
                           onPress={() =>
                             onChange(Math.min(maxTargetCount, value + 1))
                           }
-                          className="w-8 h-8 bg-muted rounded-full items-center justify-center border border-border-soft"
+                          className={`w-8 h-8 ${c.mutedBg} rounded-full items-center justify-center border ${c.borderSoft}`}
                         >
-                          <Feather name="plus" size={16} color="#3C322B" />
+                          <Feather name="plus" size={16} color={theme.colors.textMain} />
                         </TouchableOpacity>
                       </View>
                     )}
                   />
                 </View>
-                <View className="h-[1px] bg-border-soft my-2" />
+                <View className={`h-[1px] ${c.borderSoftBg} my-2`} />
               </>
             )}
             <Controller
@@ -239,12 +246,12 @@ export default function CreateRoutineScreen() {
               render={({ field: { onChange, value } }) => (
                 <View className="w-full">
                   <View className="flex-row justify-between items-center">
-                    <Text className="text-text-main">알림 시간</Text>
+                    <Text className={c.textMain}>알림 시간</Text>
                     <TouchableOpacity
                       onPress={() => setShowTimePicker((prev) => !prev)}
-                      className="px-3 py-2 rounded-full bg-muted border border-border-soft"
+                      className={`px-3 py-2 rounded-full ${c.mutedBg} border ${c.borderSoft}`}
                     >
-                      <Text className="text-primary font-bold">
+                      <Text className={`${c.primaryText} font-bold`}>
                         {formatTimeLabel(value)}
                       </Text>
                     </TouchableOpacity>
@@ -263,16 +270,16 @@ export default function CreateRoutineScreen() {
                             onChange(timeToString(selectedDate));
                           }
                         }}
-                        accentColor="#E08162"
-                        textColor="#3C322B"
+                        accentColor={theme.colors.primary}
+                        textColor={theme.colors.textMain}
                         style={{ width: "100%" }}
                       />
                       {Platform.OS === "ios" && (
                         <TouchableOpacity
                           onPress={() => setShowTimePicker(false)}
-                          className="mt-2 self-end px-3 py-1.5 rounded-full bg-card border border-border-soft"
+                          className={`mt-2 self-end px-3 py-1.5 rounded-full ${c.card} border ${c.borderSoft}`}
                         >
-                          <Text className="text-text-sub text-xs font-medium">
+                          <Text className={`${c.textSub} text-xs font-medium`}>
                             완료
                           </Text>
                         </TouchableOpacity>
@@ -287,14 +294,14 @@ export default function CreateRoutineScreen() {
 
         {/* 생성 버튼 */}
         <TouchableOpacity
-          className={`bg-primary p-5 rounded-2xl items-center shadow-lg shadow-primary/30 mb-10 ${
+          className={`${c.primaryBg} p-5 rounded-2xl items-center shadow-lg ${c.shadowPrimary30} mb-10 ${
             isSubmitting ? "opacity-50" : ""
           }`}
           onPress={handleSubmit(onSubmit)}
           disabled={isSubmitting}
         >
           <Text className="text-white font-bold text-lg">
-            {isSubmitting ? "정원에 심는 중..." : "이 목표로 시작하기"}
+            {isSubmitting ? "목표 설정 중..." : "이 목표로 시작하기"}
           </Text>
         </TouchableOpacity>
       </ScrollView>

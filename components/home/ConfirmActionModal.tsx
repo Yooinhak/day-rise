@@ -1,4 +1,5 @@
 import { Modal, Text, TouchableOpacity, View } from "react-native";
+import { useAppTheme } from "@/components/theme/AppThemeProvider";
 
 type ConfirmActionModalProps = {
   visible: boolean;
@@ -19,29 +20,33 @@ export function ConfirmActionModal({
   onClose,
   onConfirm,
 }: ConfirmActionModalProps) {
+  const { theme } = useAppTheme();
+  const c = theme.classes;
   return (
     <Modal transparent animationType="fade" visible={visible}>
       <View className="flex-1 items-center justify-center bg-black/40 px-6">
-        <View className="w-full rounded-3xl bg-card border border-border-soft p-6">
-          <Text className="text-text-main text-lg font-bold mb-2">
+        <View
+          className={`w-full rounded-3xl ${c.card} border ${c.borderSoft} p-6`}
+        >
+          <Text className={`${c.textMain} text-lg font-bold mb-2`}>
             {headline}
           </Text>
-          <Text className="text-text-sub text-sm">{title}</Text>
+          <Text className={`${c.textSub} text-sm`}>{title}</Text>
           {detail ? (
-            <Text className="text-text-sub text-xs mt-2 mb-6">{detail}</Text>
+            <Text className={`${c.textSub} text-xs mt-2 mb-6`}>{detail}</Text>
           ) : (
             <View className="mb-6" />
           )}
           <View className="flex-row items-center justify-end">
             <TouchableOpacity
               onPress={onClose}
-              className="px-4 py-2 rounded-full bg-muted border border-border-soft mr-2"
+              className={`px-4 py-2 rounded-full ${c.mutedBg} border ${c.borderSoft} mr-2`}
             >
-              <Text className="text-text-sub font-medium">취소</Text>
+              <Text className={`${c.textSub} font-medium`}>취소</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={onConfirm}
-              className="px-4 py-2 rounded-full bg-primary"
+              className={`px-4 py-2 rounded-full ${c.primaryBg}`}
             >
               <Text className="text-white font-semibold">{confirmLabel}</Text>
             </TouchableOpacity>

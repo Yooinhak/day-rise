@@ -15,6 +15,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { useColorScheme } from "@/components/useColorScheme";
+import { AppThemeProvider, useAppTheme } from "@/components/theme/AppThemeProvider";
 import { supabase } from "@/lib/supabase";
 
 export {
@@ -51,13 +52,18 @@ export default function RootLayout() {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return (
+    <AppThemeProvider>
+      <RootLayoutNav />
+    </AppThemeProvider>
+  );
 }
 
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
+  const { theme } = useAppTheme();
   const router = useRouter();
   const segments = useSegments();
   const [session, setSession] = useState<Awaited<
@@ -130,7 +136,7 @@ function RootLayoutNav() {
               options={{
                 presentation: "modal", // 아래에서 위로 올라오는 애니메이션
                 headerShown: false, // 커스텀 헤더를 쓸 것이므로 기본 헤더 숨김
-                contentStyle: { backgroundColor: "#FBF6F0" }, // 배경색 유지
+                contentStyle: { backgroundColor: theme.colors.bg }, // 배경색 유지
               }}
             />
           </Stack>
