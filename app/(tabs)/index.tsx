@@ -211,6 +211,8 @@ export default function HomeScreen() {
     }
   };
 
+  console.log("test"); // FIXME:
+
   return (
     <View className={`flex-1 ${c.bg} px-6 pt-16`}>
       <View className="flex-row justify-between items-start mb-6">
