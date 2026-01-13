@@ -41,8 +41,6 @@ const fetchHomeData = async () => {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const userName =
-    user.user_metadata?.name || user.email?.split("@")[0] || "친구";
   const monthStart = startOfMonth(new Date()).toISOString();
 
   const { data: routines, error } = await supabase
@@ -64,7 +62,7 @@ const fetchHomeData = async () => {
     .returns<HomeRoutine[]>();
 
   if (error) throw error;
-  return { routines, userName };
+  return { routines, user };
 };
 
 export default function HomeScreen() {
@@ -80,7 +78,8 @@ export default function HomeScreen() {
     title: string;
   } | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const { data, isLoading, isFetching, refetch } = useQuery({
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ["home-routines"],
     queryFn: fetchHomeData,
   });
@@ -89,14 +88,11 @@ export default function HomeScreen() {
   // 2. 루틴 완료(Log 추가) Mutation
   const { mutate: toggleRoutine } = useMutation({
     mutationFn: async (routineId: string) => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("로그인이 필요합니다.");
+      if (!data?.user) throw new Error("로그인이 필요합니다.");
 
       const { error } = await supabase.from("routine_logs").insert({
         routine_id: routineId,
-        user_id: user.id,
+        user_id: data.user.id,
       });
       if (error) throw error;
     },
@@ -162,7 +158,8 @@ export default function HomeScreen() {
   };
 
   const routines = data?.routines;
-  const userName = data?.userName ?? "친구";
+  const userName =
+    data?.user.user_metadata?.name || data?.user.email?.split("@")[0] || "친구";
   const now = new Date();
   const todayStart = startOfDay(now);
   const weekStart = startOfWeek(now, { weekStartsOn: 1 });
@@ -205,6 +202,15 @@ export default function HomeScreen() {
   const gardenProgress =
     totalDaily > 0 ? Math.round((completedDaily / totalDaily) * 100) : 0;
 
+  const handleManualRefresh = async () => {
+    setIsManualRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setIsManualRefreshing(false);
+    }
+  };
+
   return (
     <View className={`flex-1 ${c.bg} px-6 pt-16`}>
       <View className="flex-row justify-between items-start mb-6">
@@ -227,8 +233,8 @@ export default function HomeScreen() {
           isEditing ? undefined : (
             <RefreshControl
               tintColor={theme.colors.primary}
-              refreshing={isFetching}
-              onRefresh={refetch}
+              refreshing={isManualRefreshing}
+              onRefresh={handleManualRefresh}
             />
           )
         }
