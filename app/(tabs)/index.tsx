@@ -1,12 +1,10 @@
 import { ConfirmActionModal } from "@/components/home/ConfirmActionModal";
+import { DailyRoutineList } from "@/components/home/DailyRoutineList";
 import { HomeSummaryCard } from "@/components/home/HomeSummaryCard";
-import { PeriodicGoalCard } from "@/components/home/PeriodicGoalCard";
-import { RoutineItem } from "@/components/home/RoutineItem";
+import { PeriodicGoalList } from "@/components/home/PeriodicGoalList";
 import { useAppTheme } from "@/components/theme/AppThemeProvider";
-import { supabase } from "@/lib/supabase";
-import { Tables } from "@/types/database.types";
 import { Feather } from "@expo/vector-icons";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { HomeRoutine, useHomeRoutines } from "@/lib/hooks/useHomeRoutines";
 import {
   format,
   isAfter,
@@ -16,59 +14,19 @@ import {
 } from "date-fns";
 import { ko } from "date-fns/locale";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
-  Alert,
   RefreshControl,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import DraggableFlatList from "react-native-draggable-flatlist";
 import "../../global.css";
-
-type RoutineRow = Tables<"routines">;
-type RoutineLogRow = Tables<"routine_logs">;
-type HomeRoutine = RoutineRow & {
-  routine_logs: Pick<RoutineLogRow, "id" | "completed_at">[] | null;
-};
-
-// 1. 데이터 페칭 (오늘/이번 주/이번 달 로그만 효율적으로 가져오기)
-const fetchHomeData = async () => {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const monthStart = startOfMonth(new Date()).toISOString();
-
-  const { data: routines, error } = await supabase
-    .from("routines")
-    .select(
-      `
-      *,
-      routine_logs (
-        id,
-        completed_at
-      )
-    `
-    )
-    .eq("user_id", user.id)
-    .eq("is_active", true)
-    .order("sort_order", { ascending: true })
-    // 성능을 위해 이번 달의 로그만 가져옵니다.
-    .gte("routine_logs.completed_at", monthStart)
-    .returns<HomeRoutine[]>();
-
-  if (error) throw error;
-  return { routines, user };
-};
 
 export default function HomeScreen() {
   const { theme } = useAppTheme();
   const c = theme.classes;
-  const queryClient = useQueryClient();
   const [cancelTarget, setCancelTarget] = useState<{
     logId: string;
     title: string;
@@ -79,85 +37,18 @@ export default function HomeScreen() {
   } | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ["home-routines"],
-    queryFn: fetchHomeData,
-  });
-  const [orderedRoutines, setOrderedRoutines] = useState<HomeRoutine[]>([]);
+  const {
+    data,
+    isLoading,
+    refetch,
+    orderedRoutines,
+    setOrderedRoutines,
+    toggleRoutine,
+    cancelRoutine,
+    deleteRoutine,
+    updateOrder,
+  } = useHomeRoutines();
 
-  // 2. 루틴 완료(Log 추가) Mutation
-  const { mutate: toggleRoutine } = useMutation({
-    mutationFn: async (routineId: string) => {
-      if (!data?.user) throw new Error("로그인이 필요합니다.");
-
-      const { error } = await supabase.from("routine_logs").insert({
-        routine_id: routineId,
-        user_id: data.user.id,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      // 성공 시 데이터를 다시 불러와 화면 갱신
-      queryClient.invalidateQueries({ queryKey: ["home-routines"] });
-    },
-    onError: (error: any) => {
-      // DB 유니크 제약 조건에 걸릴 경우 (이미 오늘 완료한 경우)
-      if (error.code === "23505") {
-        Alert.alert("알림", "이미 오늘 루틴을 완료하셨어요! ✨");
-      } else {
-        Alert.alert("오류", "기록하는 중 문제가 발생했습니다.");
-      }
-    },
-  });
-
-  const { mutate: cancelRoutine } = useMutation({
-    mutationFn: async (logId: string) => {
-      const { error } = await supabase
-        .from("routine_logs")
-        .delete()
-        .eq("id", logId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["home-routines"] });
-    },
-    onError: () => {
-      Alert.alert("오류", "취소하는 중 문제가 발생했습니다.");
-    },
-  });
-
-  const { mutate: deleteRoutine } = useMutation({
-    mutationFn: async (routineId: string) => {
-      const { error } = await supabase
-        .from("routines")
-        .update({ is_active: false })
-        .eq("id", routineId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["home-routines"] });
-    },
-    onError: () => {
-      Alert.alert("오류", "삭제하는 중 문제가 발생했습니다.");
-    },
-  });
-
-  const updateOrder = async (newOrderedRoutines: HomeRoutine[]) => {
-    const payload = newOrderedRoutines.map((routine, index) => ({
-      id: routine.id,
-      sort_order: index,
-    }));
-
-    const { error } = await supabase.rpc("update_routine_order", { payload });
-
-    if (!error) {
-      queryClient.invalidateQueries({ queryKey: ["home-routines"] });
-    } else {
-      Alert.alert("오류", "순서를 저장하는 중 문제가 발생했습니다.");
-    }
-  };
-
-  const routines = data?.routines;
   const userName =
     data?.user.user_metadata?.name || data?.user.email?.split("@")[0] || "친구";
   const now = new Date();
@@ -165,12 +56,6 @@ export default function HomeScreen() {
   const weekStart = startOfWeek(now, { weekStartsOn: 1 });
   const monthStart = startOfMonth(now);
   const todayLabel = format(now, "M월 d일 EEEE", { locale: ko });
-
-  useEffect(() => {
-    if (routines) {
-      setOrderedRoutines(routines);
-    }
-  }, [routines]);
 
   if (isLoading) return <View className={`flex-1 ${c.bg}`} />;
 
@@ -211,7 +96,23 @@ export default function HomeScreen() {
     }
   };
 
-  console.log("test"); // FIXME:
+  const handleDailyReorder = (newDailyOrder: HomeRoutine[]) => {
+    setOrderedRoutines((prev) => {
+      const periodic = prev.filter((r) => r.frequency !== "daily");
+      const newOrdered = [...newDailyOrder, ...periodic];
+      updateOrder(newOrdered);
+      return newOrdered;
+    });
+  };
+
+  const handlePeriodicReorder = (newPeriodicOrder: HomeRoutine[]) => {
+    setOrderedRoutines((prev) => {
+      const daily = prev.filter((r) => r.frequency === "daily");
+      const newOrdered = [...daily, ...newPeriodicOrder];
+      updateOrder(newOrdered);
+      return newOrdered;
+    });
+  };
 
   return (
     <View className={`flex-1 ${c.bg} px-6 pt-16`}>
@@ -269,90 +170,19 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
 
-          {isEditing ? (
-            <DraggableFlatList<HomeRoutine>
-              data={dailyRoutines}
-              keyExtractor={(item) => item.id}
-              scrollEnabled={false}
-              activationDistance={12}
-              onDragEnd={({ data }) => {
-                setOrderedRoutines((prev) => {
-                  const periodic = prev.filter((r) => r.frequency !== "daily");
-                  const newOrdered = [...data, ...periodic];
-                  updateOrder(newOrdered);
-                  return newOrdered;
-                });
-              }}
-              renderItem={({ item, drag, isActive }) => {
-                const done = isDoneToday(item);
-                const todayLogId = getTodayLogId(item);
-                return (
-                  <RoutineItem
-                    key={item.id}
-                    title={item.title}
-                    time={getTimeLabel(item)}
-                    done={done}
-                    isEditing={isEditing}
-                    isDragging={isActive}
-                    onDrag={drag}
-                    onPress={() => {
-                      if (isEditing) return;
-                      if (!done) {
-                        toggleRoutine(item.id);
-                        return;
-                      }
-                      if (todayLogId) {
-                        setCancelTarget({
-                          logId: todayLogId,
-                          title: item.title,
-                        });
-                      }
-                    }}
-                    onDelete={() => {
-                      if (!isEditing) return;
-                      setDeleteTarget({
-                        routineId: item.id,
-                        title: item.title,
-                      });
-                    }}
-                  />
-                );
-              }}
-            />
-          ) : (
-            dailyRoutines.map((routine) => {
-              const done = isDoneToday(routine);
-              const todayLogId = getTodayLogId(routine);
-              return (
-                <RoutineItem
-                  key={routine.id}
-                  title={routine.title}
-                  time={getTimeLabel(routine)}
-                  done={done}
-                  isEditing={isEditing}
-                  onPress={() => {
-                    if (!done) {
-                      toggleRoutine(routine.id);
-                      return;
-                    }
-                    if (todayLogId) {
-                      setCancelTarget({
-                        logId: todayLogId,
-                        title: routine.title,
-                      });
-                    }
-                  }}
-                  onDelete={() => {
-                    if (!isEditing) return;
-                    setDeleteTarget({
-                      routineId: routine.id,
-                      title: routine.title,
-                    });
-                  }}
-                />
-              );
-            })
-          )}
+          <DailyRoutineList
+            routines={dailyRoutines}
+            isEditing={isEditing}
+            onReorder={handleDailyReorder}
+            isDoneToday={isDoneToday}
+            getTodayLogId={getTodayLogId}
+            getTimeLabel={getTimeLabel}
+            onToggle={toggleRoutine}
+            onCancel={(logId, title) => setCancelTarget({ logId, title })}
+            onDelete={(routineId, title) =>
+              setDeleteTarget({ routineId, title })
+            }
+          />
         </View>
 
         <View className="mb-24">
@@ -361,114 +191,20 @@ export default function HomeScreen() {
               이번 주/달에 채워야 할 목표
             </Text>
           </View>
-          {isEditing ? (
-            <DraggableFlatList<HomeRoutine>
-              data={periodicGoals}
-              keyExtractor={(item) => item.id}
-              scrollEnabled={false}
-              activationDistance={12}
-              onDragEnd={({ data }) => {
-                setOrderedRoutines((prev) => {
-                  const daily = prev.filter((r) => r.frequency === "daily");
-                  const newOrdered = [...daily, ...data];
-                  updateOrder(newOrdered);
-                  return newOrdered;
-                });
-              }}
-              renderItem={({ item, drag, isActive }) => {
-                const start =
-                  item.frequency === "weekly" ? weekStart : monthStart;
-                const progress = (item.routine_logs ?? []).filter((log) =>
-                  isAfter(new Date(log.completed_at), start)
-                ).length;
-                const doneToday = isDoneToday(item);
-                const todayLogId = getTodayLogId(item);
-                return (
-                  <PeriodicGoalCard
-                    key={item.id}
-                    title={item.title}
-                    period={item.frequency}
-                    progress={progress}
-                    goal={item.target_count}
-                    caption={
-                      item.frequency === "weekly"
-                        ? "이번 주 목표"
-                        : "이번 달 목표"
-                    }
-                    doneToday={doneToday}
-                    isEditing={isEditing}
-                    isDragging={isActive}
-                    onDrag={drag}
-                    onPress={() => {
-                      if (isEditing) return;
-                      if (!doneToday) {
-                        toggleRoutine(item.id);
-                        return;
-                      }
-                      if (todayLogId) {
-                        setCancelTarget({
-                          logId: todayLogId,
-                          title: item.title,
-                        });
-                      }
-                    }}
-                    onDelete={() => {
-                      if (!isEditing) return;
-                      setDeleteTarget({
-                        routineId: item.id,
-                        title: item.title,
-                      });
-                    }}
-                  />
-                );
-              }}
-            />
-          ) : (
-            periodicGoals.map((goal) => {
-              const start =
-                goal.frequency === "weekly" ? weekStart : monthStart;
-              const progress = (goal.routine_logs ?? []).filter((log) =>
-                isAfter(new Date(log.completed_at), start)
-              ).length;
-              const doneToday = isDoneToday(goal);
-              const todayLogId = getTodayLogId(goal);
-              return (
-                <PeriodicGoalCard
-                  key={goal.id}
-                  title={goal.title}
-                  period={goal.frequency}
-                  progress={progress}
-                  goal={goal.target_count}
-                  caption={
-                    goal.frequency === "weekly"
-                      ? "이번 주 목표"
-                      : "이번 달 목표"
-                  }
-                  doneToday={doneToday}
-                  isEditing={isEditing}
-                  onPress={() => {
-                    if (!doneToday) {
-                      toggleRoutine(goal.id);
-                      return;
-                    }
-                    if (todayLogId) {
-                      setCancelTarget({
-                        logId: todayLogId,
-                        title: goal.title,
-                      });
-                    }
-                  }}
-                  onDelete={() => {
-                    if (!isEditing) return;
-                    setDeleteTarget({
-                      routineId: goal.id,
-                      title: goal.title,
-                    });
-                  }}
-                />
-              );
-            })
-          )}
+          <PeriodicGoalList
+            routines={periodicGoals}
+            isEditing={isEditing}
+            weekStart={weekStart}
+            monthStart={monthStart}
+            onReorder={handlePeriodicReorder}
+            isDoneToday={isDoneToday}
+            getTodayLogId={getTodayLogId}
+            onToggle={toggleRoutine}
+            onCancel={(logId, title) => setCancelTarget({ logId, title })}
+            onDelete={(routineId, title) =>
+              setDeleteTarget({ routineId, title })
+            }
+          />
         </View>
       </ScrollView>
 
