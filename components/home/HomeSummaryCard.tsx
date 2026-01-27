@@ -1,15 +1,15 @@
-import { Text, View } from "react-native";
 import { useAppTheme } from "@/components/theme/AppThemeProvider";
+import { Text, View } from "react-native";
 
 type HomeSummaryCardProps = {
-  gardenProgress: number;
+  todayProgress: number;
   completedDaily: number;
   totalDaily: number;
   userName: string;
 };
 
 export function HomeSummaryCard({
-  gardenProgress,
+  todayProgress,
   completedDaily,
   totalDaily,
   userName,
@@ -26,9 +26,9 @@ export function HomeSummaryCard({
             오늘의 성취
           </Text>
           <Text className={`${c.textMain} text-xl font-bold`}>
-            {gardenProgress >= 100
+            {todayProgress >= 100
               ? `${userName}님, 오늘 목표를\n완벽하게 달성했어요! 🌟`
-              : `${userName}님, 오늘 목표의 ${gardenProgress}%를\n해냈어요`}
+              : `${userName}님, 오늘 목표의 ${todayProgress}%를\n해냈어요`}
           </Text>
           <Text className={`${c.textMain} text-sm mt-2 opacity-70`}>
             오늘 목표 기준으로 달성률이 계산돼요
@@ -48,13 +48,13 @@ export function HomeSummaryCard({
         >
           <View
             className={`h-full ${c.primaryBg} rounded-full`}
-            style={{ width: `${Math.min(100, gardenProgress)}%` }}
+            style={{ width: `${Math.min(100, todayProgress)}%` }}
           />
         </View>
         <View className="flex-row justify-between mt-2">
           <Text className={`${c.textSub} text-xs`}>오늘의 달성률</Text>
           <Text className={`${c.primaryText} text-xs font-bold`}>
-            {gardenProgress}%
+            {todayProgress}%
           </Text>
         </View>
       </View>

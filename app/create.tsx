@@ -1,10 +1,11 @@
+import { useAppTheme } from "@/components/theme/AppThemeProvider";
 import { Feather } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useQueryClient } from "@tanstack/react-query";
 import { format, isValid, parse, set } from "date-fns";
 import { ko } from "date-fns/locale";
 import { router } from "expo-router";
-import { useQueryClient } from "@tanstack/react-query";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   Platform,
@@ -14,7 +15,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useAppTheme } from "@/components/theme/AppThemeProvider";
 import { supabase } from "../lib/supabase"; // 설정해둔 supabase 클라이언트
 import { Enums, TablesInsert } from "../types/database.types";
 
@@ -103,7 +103,7 @@ export default function CreateRoutineScreen() {
     return 1;
   })();
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (frequency === "daily") {
       setValue("target_count", 1);
     } else {
@@ -215,14 +215,18 @@ export default function CreateRoutineScreen() {
                     render={({ field: { onChange, value } }) => (
                       <View className="flex-row items-center">
                         <TouchableOpacity
-                          onPress={() =>
-                            onChange(Math.max(1, value - 1))
-                          }
+                          onPress={() => onChange(Math.max(1, value - 1))}
                           className={`w-8 h-8 ${c.mutedBg} rounded-full items-center justify-center border ${c.borderSoft}`}
                         >
-                          <Feather name="minus" size={16} color={theme.colors.textMain} />
+                          <Feather
+                            name="minus"
+                            size={16}
+                            color={theme.colors.textMain}
+                          />
                         </TouchableOpacity>
-                        <Text className={`${c.textMain} mx-4 font-bold text-lg`}>
+                        <Text
+                          className={`${c.textMain} mx-4 font-bold text-lg`}
+                        >
                           {value}회
                         </Text>
                         <TouchableOpacity
@@ -231,7 +235,11 @@ export default function CreateRoutineScreen() {
                           }
                           className={`w-8 h-8 ${c.mutedBg} rounded-full items-center justify-center border ${c.borderSoft}`}
                         >
-                          <Feather name="plus" size={16} color={theme.colors.textMain} />
+                          <Feather
+                            name="plus"
+                            size={16}
+                            color={theme.colors.textMain}
+                          />
                         </TouchableOpacity>
                       </View>
                     )}

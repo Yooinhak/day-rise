@@ -3,8 +3,8 @@ import { DailyRoutineList } from "@/components/home/DailyRoutineList";
 import { HomeSummaryCard } from "@/components/home/HomeSummaryCard";
 import { PeriodicGoalList } from "@/components/home/PeriodicGoalList";
 import { useAppTheme } from "@/components/theme/AppThemeProvider";
-import { Feather } from "@expo/vector-icons";
 import { HomeRoutine, useHomeRoutines } from "@/lib/hooks/useHomeRoutines";
+import { Feather } from "@expo/vector-icons";
 import {
   format,
   isAfter,
@@ -61,12 +61,12 @@ export default function HomeScreen() {
 
   const getTodayLogId = (routine: HomeRoutine) =>
     (routine.routine_logs ?? []).find((log) =>
-      isAfter(new Date(log.completed_at), todayStart)
+      isAfter(new Date(log.completed_at), todayStart),
     )?.id;
 
   const isDoneToday = (routine: HomeRoutine) =>
     (routine.routine_logs ?? []).some((log) =>
-      isAfter(new Date(log.completed_at), todayStart)
+      isAfter(new Date(log.completed_at), todayStart),
     );
 
   const getTimeLabel = (routine: HomeRoutine) =>
@@ -84,7 +84,7 @@ export default function HomeScreen() {
   // $$\text{gardenProgress} = \frac{\text{completedDaily} + \text{bonusCount}}{\text{totalDaily}} \times 100$$
   const totalDaily = dailyRoutines.length;
   const completedDaily = dailyRoutines.filter((r) => isDoneToday(r)).length;
-  const gardenProgress =
+  const todayProgress =
     totalDaily > 0 ? Math.round((completedDaily / totalDaily) * 100) : 0;
 
   const handleManualRefresh = async () => {
@@ -144,7 +144,7 @@ export default function HomeScreen() {
         className="flex-1"
       >
         <HomeSummaryCard
-          gardenProgress={gardenProgress}
+          todayProgress={todayProgress}
           completedDaily={completedDaily}
           totalDaily={totalDaily}
           userName={userName}
