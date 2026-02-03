@@ -5,6 +5,7 @@ type HomeSummaryCardProps = {
   todayProgress: number;
   completedDaily: number;
   totalDaily: number;
+  weeklyProgress: number;
   userName: string;
 };
 
@@ -12,6 +13,7 @@ export function HomeSummaryCard({
   todayProgress,
   completedDaily,
   totalDaily,
+  weeklyProgress,
   userName,
 }: HomeSummaryCardProps) {
   const { theme } = useAppTheme();
@@ -43,6 +45,22 @@ export function HomeSummaryCard({
         </View>
       </View>
       <View className="mt-4">
+        <View
+          className={`h-2 ${c.card} rounded-full overflow-hidden border ${c.borderSoft}`}
+        >
+          <View
+            className={`h-full ${c.primaryBg} rounded-full`}
+            style={{ width: `${Math.min(100, weeklyProgress)}%` }}
+          />
+        </View>
+        <View className="flex-row justify-between mt-2">
+          <Text className={`${c.textSub} text-xs`}>이번 주 달성률</Text>
+          <Text className={`${c.primaryText} text-xs font-bold`}>
+            {weeklyProgress}%
+          </Text>
+        </View>
+      </View>
+      <View className="mt-3">
         <View
           className={`h-2 ${c.card} rounded-full overflow-hidden border ${c.borderSoft}`}
         >

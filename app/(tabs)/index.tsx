@@ -6,6 +6,7 @@ import { useAppTheme } from "@/components/theme/AppThemeProvider";
 import { HomeRoutine, useHomeRoutines } from "@/lib/hooks/useHomeRoutines";
 import { Feather } from "@expo/vector-icons";
 import {
+  differenceInDays,
   format,
   isAfter,
   startOfDay,
@@ -14,7 +15,7 @@ import {
 } from "date-fns";
 import { ko } from "date-fns/locale";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   RefreshControl,
   ScrollView,
@@ -87,6 +88,41 @@ export default function HomeScreen() {
   const todayProgress =
     totalDaily > 0 ? Math.round((completedDaily / totalDaily) * 100) : 0;
 
+  /**
+   * 이번 주 달성률 구하기
+   */
+  const weeklyProgress = useMemo(() => {
+    let totalCount = 0;
+    let completedCount = 0;
+
+    orderedRoutines.forEach((r) => {
+      if (r.frequency === "daily" && !!r.created_at) {
+        // daily 루틴의 주간 목표 개수 계산
+        const daysSinceCreation =
+          differenceInDays(todayStart, startOfDay(new Date(r.created_at))) + 1;
+        const target = daysSinceCreation > 7 ? 7 : daysSinceCreation;
+        totalCount += target;
+
+        // 이번 주에 완료된 횟수 계산
+        const weeklyLogs = (r.routine_logs ?? []).filter((log) =>
+          isAfter(new Date(log.completed_at), weekStart),
+        );
+        completedCount += weeklyLogs.length;
+      } else if (r.frequency === "weekly") {
+        // weekly 루틴의 목표 개수
+        totalCount += r.target_count;
+
+        // 이번 주에 완료된 횟수 계산
+        const weeklyLogs = (r.routine_logs ?? []).filter((log) =>
+          isAfter(new Date(log.completed_at), weekStart),
+        );
+        completedCount += Math.min(weeklyLogs.length, r.target_count);
+      }
+    });
+
+    return totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+  }, [orderedRoutines, todayStart, weekStart]);
+
   const handleManualRefresh = async () => {
     setIsManualRefreshing(true);
     try {
@@ -147,6 +183,7 @@ export default function HomeScreen() {
           todayProgress={todayProgress}
           completedDaily={completedDaily}
           totalDaily={totalDaily}
+          weeklyProgress={weeklyProgress}
           userName={userName}
         />
 
