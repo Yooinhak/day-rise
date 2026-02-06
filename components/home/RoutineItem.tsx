@@ -1,11 +1,12 @@
+import { useAppTheme } from "@/components/theme/AppThemeProvider";
 import { Feather } from "@expo/vector-icons";
 import { Text, TouchableOpacity, View } from "react-native";
-import { useAppTheme } from "@/components/theme/AppThemeProvider";
 
 type RoutineItemProps = {
   title: string;
   time: string;
   done: boolean;
+  streak?: number;
   isEditing: boolean;
   onPress?: () => void;
   isDragging?: boolean;
@@ -17,6 +18,7 @@ export function RoutineItem({
   title,
   time,
   done,
+  streak,
   onPress,
   isEditing,
   isDragging,
@@ -35,11 +37,20 @@ export function RoutineItem({
       style={{ elevation: 2 }}
     >
       <View className="flex-1">
-        <Text
-          className={`text-lg font-semibold ${done ? `line-through ${c.textSub}` : c.textMain}`}
-        >
-          {title}
-        </Text>
+        <View className="flex-row items-center">
+          <Text
+            className={`text-lg font-semibold ${done ? `line-through ${c.textSub}` : c.textMain}`}
+          >
+            {title}
+          </Text>
+          {streak !== undefined && streak > 0 && (
+            <View className="flex-row items-center ml-2 bg-orange-100 px-2 py-0.5 rounded-full">
+              <Text className="text-orange-500 text-xs font-medium">
+                {streak}
+              </Text>
+            </View>
+          )}
+        </View>
         <Text className={`${c.textSub} text-xs`}>{time}</Text>
       </View>
       {isEditing && (

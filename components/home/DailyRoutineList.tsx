@@ -44,6 +44,7 @@ export const DailyRoutineList = ({
               title={item.title}
               time={getTimeLabel(item)}
               done={done}
+              streak={item.streak}
               isEditing={isEditing}
               isDragging={isActive}
               onDrag={drag}
@@ -77,6 +78,7 @@ export const DailyRoutineList = ({
         title={routine.title}
         time={getTimeLabel(routine)}
         done={done}
+        streak={routine.streak}
         isEditing={isEditing}
         onPress={() => {
           if (!done) {

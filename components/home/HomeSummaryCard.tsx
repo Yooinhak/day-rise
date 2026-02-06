@@ -7,6 +7,7 @@ type HomeSummaryCardProps = {
   totalDaily: number;
   weeklyProgress: number;
   userName: string;
+  globalStreak: number;
 };
 
 export function HomeSummaryCard({
@@ -15,13 +16,19 @@ export function HomeSummaryCard({
   totalDaily,
   weeklyProgress,
   userName,
+  globalStreak,
 }: HomeSummaryCardProps) {
   const { theme } = useAppTheme();
   const c = theme.classes;
   return (
     <View
-      className={`${c.primaryBg10} p-5 rounded-2xl mb-6 border ${c.primaryBorder20}`}
+      className={`${c.primaryBg10} p-5 rounded-2xl mb-6 border ${c.primaryBorder20} relative`}
     >
+      {globalStreak > 0 && (
+        <View className="absolute -top-2 -right-2 flex-row items-center bg-orange-500 px-3 py-1 rounded-full shadow-sm z-10">
+          <Text className="text-white text-sm font-bold">{globalStreak}</Text>
+        </View>
+      )}
       <View className="flex-row items-start justify-between">
         <View className="flex-1 pr-4">
           <Text className={`${c.textSub} text-xs font-medium mb-1`}>

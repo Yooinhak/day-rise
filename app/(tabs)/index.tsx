@@ -185,6 +185,7 @@ export default function HomeScreen() {
           totalDaily={totalDaily}
           weeklyProgress={weeklyProgress}
           userName={userName}
+          globalStreak={data?.globalStreak ?? 0}
         />
 
         <View className="mb-6">
