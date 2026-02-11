@@ -220,6 +220,7 @@ export default function HomeScreen() {
             onDelete={(routineId, title) =>
               setDeleteTarget({ routineId, title })
             }
+            onEdit={(routineId) => router.push(`/edit?id=${routineId}` as any)}
           />
         </View>
 
@@ -242,6 +243,7 @@ export default function HomeScreen() {
             onDelete={(routineId, title) =>
               setDeleteTarget({ routineId, title })
             }
+            onEdit={(routineId) => router.push(`/edit?id=${routineId}` as any)}
           />
         </View>
       </ScrollView>

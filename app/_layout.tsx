@@ -134,9 +134,28 @@ function RootLayoutNav() {
             <Stack.Screen
               name="create"
               options={{
-                presentation: "modal", // 아래에서 위로 올라오는 애니메이션
-                headerShown: false, // 커스텀 헤더를 쓸 것이므로 기본 헤더 숨김
-                contentStyle: { backgroundColor: theme.colors.bg }, // 배경색 유지
+                presentation: "modal",
+                headerShown: false,
+                contentStyle: { backgroundColor: theme.colors.bg },
+              }}
+            />
+
+            {/* 수정 화면 */}
+            <Stack.Screen
+              name="edit"
+              options={{
+                presentation: "modal",
+                headerShown: false,
+                contentStyle: { backgroundColor: theme.colors.bg },
+              }}
+            />
+
+            {/* 설정 화면 */}
+            <Stack.Screen
+              name="settings"
+              options={{
+                headerShown: false,
+                contentStyle: { backgroundColor: theme.colors.bg },
               }}
             />
           </Stack>

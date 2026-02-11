@@ -1,5 +1,5 @@
 import { Feather } from "@expo/vector-icons";
-import { Stack } from "expo-router";
+import { router } from "expo-router";
 import { useState } from "react";
 import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
@@ -22,8 +22,10 @@ export default function SettingsScreen() {
   }
 
   return (
-    <ScrollView className={`flex-1 ${c.bg} px-6 pt-16`}>
-      <Stack.Screen options={{ title: "설정", headerShown: true }} />
+    <ScrollView className={`flex-1 ${c.bg} px-6 pt-12`}>
+      <TouchableOpacity onPress={() => router.back()} className="mb-4">
+        <Feather name="x" size={24} color={theme.colors.textMain} />
+      </TouchableOpacity>
       <Text className={`${c.textMain} text-2xl font-bold mb-6`}>설정</Text>
 
       <View className="mb-10">

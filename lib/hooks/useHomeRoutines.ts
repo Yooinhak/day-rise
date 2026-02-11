@@ -19,7 +19,7 @@ export type HomeRoutine = RoutineRow & {
 
 type HomeData = {
   routines: HomeRoutine[];
-  user: { id: string; email?: string };
+  user: { id: string; email?: string; user_metadata?: Record<string, any> };
   globalStreak: number;
 };
 

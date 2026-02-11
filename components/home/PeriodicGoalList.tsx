@@ -14,6 +14,7 @@ type PeriodicGoalListProps = {
   onToggle: (routineId: string) => void;
   onCancel: (logId: string, title: string) => void;
   onDelete: (routineId: string, title: string) => void;
+  onEdit: (routineId: string) => void;
 };
 
 export const PeriodicGoalList = ({
@@ -27,6 +28,7 @@ export const PeriodicGoalList = ({
   onToggle,
   onCancel,
   onDelete,
+  onEdit,
 }: PeriodicGoalListProps) => {
   if (isEditing) {
     return (
@@ -69,6 +71,7 @@ export const PeriodicGoalList = ({
                   onCancel(todayLogId, item.title);
                 }
               }}
+              onEdit={() => onEdit(item.id)}
               onDelete={() => {
                 if (!isEditing) return;
                 onDelete(item.id, item.title);
@@ -106,6 +109,7 @@ export const PeriodicGoalList = ({
             onCancel(todayLogId, goal.title);
           }
         }}
+        onEdit={() => onEdit(goal.id)}
         onDelete={() => {
           if (!isEditing) return;
           onDelete(goal.id, goal.title);
