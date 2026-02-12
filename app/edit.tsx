@@ -1,4 +1,5 @@
 import { useAppTheme } from "@/components/theme/AppThemeProvider";
+import { scheduleRoutineNotification } from "@/lib/notifications";
 import { supabase } from "@/lib/supabase";
 import { Enums, TablesInsert } from "@/types/database.types";
 import { Feather } from "@expo/vector-icons";
@@ -97,6 +98,13 @@ export default function EditRoutineScreen() {
         .eq("id", id);
 
       if (error) throw error;
+
+      scheduleRoutineNotification({
+        id,
+        title: formData.title,
+        reminder_time: formData.reminder_time ?? null,
+        is_active: true,
+      });
 
       queryClient.invalidateQueries({ queryKey: ["home-routines"] });
       queryClient.invalidateQueries({ queryKey: ["profile-stats"] });

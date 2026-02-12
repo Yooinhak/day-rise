@@ -16,6 +16,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { useColorScheme } from "@/components/useColorScheme";
 import { AppThemeProvider, useAppTheme } from "@/components/theme/AppThemeProvider";
+import { useNotificationSync } from "@/lib/hooks/useNotificationSync";
 import { supabase } from "@/lib/supabase";
 
 export {
@@ -60,6 +61,11 @@ export default function RootLayout() {
 }
 
 const queryClient = new QueryClient();
+
+function NotificationSync() {
+  useNotificationSync();
+  return null;
+}
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
@@ -122,6 +128,7 @@ function RootLayoutNav() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
+        <NotificationSync />
         <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
           <Stack>
             {/* 인증 플로우 */}

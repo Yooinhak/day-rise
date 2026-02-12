@@ -1,3 +1,4 @@
+import { cancelRoutineNotification } from "@/lib/notifications";
 import { supabase } from "@/lib/supabase";
 import {
   calculateGlobalStreak,
@@ -137,6 +138,8 @@ export const useHomeRoutines = () => {
 
   const deleteRoutine = useMutation({
     mutationFn: async (routineId: string) => {
+      await cancelRoutineNotification(routineId);
+
       const { error } = await supabase
         .from("routines")
         .update({ is_active: false })

@@ -1,4 +1,5 @@
 import { useAppTheme } from "@/components/theme/AppThemeProvider";
+import { scheduleRoutineNotification } from "@/lib/notifications";
 import { Feather } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useQueryClient } from "@tanstack/react-query";
@@ -69,18 +70,30 @@ export default function CreateRoutineScreen() {
 
       const nextSortOrder = (orderData?.[0]?.sort_order ?? -1) + 1;
 
-      // 3. 이제 .from("routines").insert()를 작성할 때
-      // 컬럼명 자동 완성 및 타입 체크가 작동합니다!
-      const { error } = await supabase.from("routines").insert({
-        user_id: user.id,
-        title: data.title,
-        frequency: data.frequency,
-        target_count: data.target_count,
-        reminder_time: data.reminder_time,
-        sort_order: nextSortOrder,
-      });
+      const { data: inserted, error } = await supabase
+        .from("routines")
+        .insert({
+          user_id: user.id,
+          title: data.title,
+          frequency: data.frequency,
+          target_count: data.target_count,
+          reminder_time: data.reminder_time,
+          sort_order: nextSortOrder,
+        })
+        .select("id")
+        .single();
 
       if (error) throw error;
+
+      if (inserted) {
+        scheduleRoutineNotification({
+          id: inserted.id,
+          title: data.title,
+          reminder_time: data.reminder_time ?? null,
+          is_active: true,
+        });
+      }
+
       queryClient.invalidateQueries({ queryKey: ["home-routines"] });
       router.back();
     } catch (error: any) {

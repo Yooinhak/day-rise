@@ -1,19 +1,65 @@
 import { Feather } from "@expo/vector-icons";
+import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { useState } from "react";
-import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  Alert,
+  ScrollView,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 import { useAppTheme } from "@/components/theme/AppThemeProvider";
+import {
+  cancelAllRoutineNotifications,
+  getNotificationsEnabled,
+  setNotificationsEnabled,
+  syncAllNotifications,
+} from "@/lib/notifications";
 import { supabase } from "@/lib/supabase";
 
 export default function SettingsScreen() {
   const { theme, themeId, setThemeId, availableThemes } = useAppTheme();
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [notificationsOn, setNotificationsOn] = useState(true);
+  const [notifLoading, setNotifLoading] = useState(true);
+  const queryClient = useQueryClient();
   const c = theme.classes;
+
+  useEffect(() => {
+    getNotificationsEnabled().then((enabled) => {
+      setNotificationsOn(enabled);
+      setNotifLoading(false);
+    });
+  }, []);
+
+  async function handleToggleNotifications(value: boolean) {
+    setNotificationsOn(value);
+    await setNotificationsEnabled(value);
+
+    if (!value) {
+      await cancelAllRoutineNotifications();
+    } else {
+      const data = queryClient.getQueryData(["home-routines"]) as {
+        routines: {
+          id: string;
+          title: string;
+          reminder_time: string | null;
+          is_active: boolean | null;
+        }[];
+      } | null;
+      if (data?.routines) {
+        await syncAllNotifications(data.routines);
+      }
+    }
+  }
 
   async function handleSignOut() {
     if (isSigningOut) return;
     setIsSigningOut(true);
+    await cancelAllRoutineNotifications();
     const { error } = await supabase.auth.signOut();
     if (error) {
       Alert.alert("로그아웃 실패", error.message);
@@ -80,6 +126,34 @@ export default function SettingsScreen() {
             </TouchableOpacity>
           );
         })}
+      </View>
+
+      <View className="mb-10">
+        <Text className={`${c.textMain} text-lg font-bold mb-4`}>알림</Text>
+        <View
+          className={`${c.card} border ${c.borderSoft} rounded-2xl p-5 shadow-sm`}
+        >
+          <View className="flex-row items-center justify-between">
+            <View className="flex-1 mr-4">
+              <Text className={`${c.textMain} text-base font-semibold`}>
+                루틴 알림
+              </Text>
+              <Text className={`${c.textSub} text-xs mt-1`}>
+                설정한 시간에 알림으로 루틴을 리마인드해요
+              </Text>
+            </View>
+            <Switch
+              value={notificationsOn}
+              onValueChange={handleToggleNotifications}
+              disabled={notifLoading}
+              trackColor={{
+                false: theme.colors.border,
+                true: theme.colors.primary,
+              }}
+              thumbColor="white"
+            />
+          </View>
+        </View>
       </View>
 
       <View className="mb-12">
