@@ -19,6 +19,7 @@ type PeriodicGoalCardProps = {
   isDragging?: boolean;
   onDrag?: () => void;
   onPress?: () => void;
+  onLongPress?: () => void;
   onDelete: () => void;
   onEdit?: () => void;
 };
@@ -31,6 +32,7 @@ export function PeriodicGoalCard({
   caption,
   doneToday,
   onPress,
+  onLongPress,
   isEditing,
   isDragging,
   onDrag,
@@ -74,6 +76,7 @@ export function PeriodicGoalCard({
   return (
     <AnimatedPressable
       onPress={onPress}
+      onLongPress={onLongPress}
       haptic={isEditing ? "none" : "light"}
       disabled={isEditing}
       className={`${c.card} p-5 rounded-2xl border ${c.borderSoft} mb-3 ${

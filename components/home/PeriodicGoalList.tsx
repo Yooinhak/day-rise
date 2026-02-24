@@ -15,6 +15,7 @@ type PeriodicGoalListProps = {
   onCancel: (logId: string, title: string) => void;
   onDelete: (routineId: string, title: string) => void;
   onEdit: (routineId: string) => void;
+  onLongPress: (routineId: string) => void;
 };
 
 export const PeriodicGoalList = ({
@@ -29,6 +30,7 @@ export const PeriodicGoalList = ({
   onCancel,
   onDelete,
   onEdit,
+  onLongPress,
 }: PeriodicGoalListProps) => {
   if (isEditing) {
     return (
@@ -61,6 +63,9 @@ export const PeriodicGoalList = ({
               isEditing={isEditing}
               isDragging={isActive}
               onDrag={drag}
+              onLongPress={() => {
+                if (!isEditing) onLongPress(item.id);
+              }}
               onPress={() => {
                 if (isEditing) return;
                 if (!doneToday) {
@@ -100,6 +105,7 @@ export const PeriodicGoalList = ({
         caption={goal.frequency === "weekly" ? "이번 주 목표" : "이번 달 목표"}
         doneToday={doneToday}
         isEditing={isEditing}
+        onLongPress={() => onLongPress(goal.id)}
         onPress={() => {
           if (!doneToday) {
             onToggle(goal.id);

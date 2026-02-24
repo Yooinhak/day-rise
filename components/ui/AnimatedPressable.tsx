@@ -17,6 +17,7 @@ const SPRING_CONFIG = {
 
 type AnimatedPressableProps = PropsWithChildren<{
   onPress?: () => void;
+  onLongPress?: () => void;
   disabled?: boolean;
   className?: string;
   style?: ViewStyle;
@@ -26,6 +27,7 @@ type AnimatedPressableProps = PropsWithChildren<{
 
 export function AnimatedPressable({
   onPress,
+  onLongPress,
   disabled,
   className,
   style,
@@ -57,6 +59,7 @@ export function AnimatedPressable({
   return (
     <AnimatedPress
       onPress={onPress}
+      onLongPress={onLongPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       disabled={disabled}

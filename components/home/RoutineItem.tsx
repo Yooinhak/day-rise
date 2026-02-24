@@ -16,6 +16,7 @@ type RoutineItemProps = {
   streak?: number;
   isEditing: boolean;
   onPress?: () => void;
+  onLongPress?: () => void;
   isDragging?: boolean;
   onDrag?: () => void;
   onDelete: () => void;
@@ -28,6 +29,7 @@ export function RoutineItem({
   done,
   streak,
   onPress,
+  onLongPress,
   isEditing,
   isDragging,
   onDrag,
@@ -50,6 +52,7 @@ export function RoutineItem({
   return (
     <AnimatedPressable
       onPress={onPress}
+      onLongPress={onLongPress}
       haptic={isEditing ? "none" : "light"}
       disabled={isEditing}
       className={`flex-row items-center p-5 rounded-2xl ${c.card} mb-3 border ${c.borderSoft} ${

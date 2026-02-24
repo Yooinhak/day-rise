@@ -2,6 +2,7 @@ import { ConfirmActionModal } from "@/components/home/ConfirmActionModal";
 import { DailyRoutineList } from "@/components/home/DailyRoutineList";
 import { HomeSummaryCard } from "@/components/home/HomeSummaryCard";
 import { PeriodicGoalList } from "@/components/home/PeriodicGoalList";
+import { RoutineDetailSheet } from "@/components/home/RoutineDetailSheet";
 import { useAppTheme } from "@/components/theme/AppThemeProvider";
 import { HomeRoutine, useHomeRoutines } from "@/lib/hooks/useHomeRoutines";
 import { Feather } from "@expo/vector-icons";
@@ -38,6 +39,7 @@ export default function HomeScreen() {
   } | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  const [detailRoutineId, setDetailRoutineId] = useState<string | null>(null);
   const {
     data,
     isLoading,
@@ -221,6 +223,7 @@ export default function HomeScreen() {
               setDeleteTarget({ routineId, title })
             }
             onEdit={(routineId) => router.push(`/edit?id=${routineId}` as any)}
+            onLongPress={(routineId) => setDetailRoutineId(routineId)}
           />
         </View>
 
@@ -244,6 +247,7 @@ export default function HomeScreen() {
               setDeleteTarget({ routineId, title })
             }
             onEdit={(routineId) => router.push(`/edit?id=${routineId}` as any)}
+            onLongPress={(routineId) => setDetailRoutineId(routineId)}
           />
         </View>
       </ScrollView>
@@ -281,6 +285,11 @@ export default function HomeScreen() {
           deleteRoutine(deleteTarget.routineId);
           setDeleteTarget(null);
         }}
+      />
+
+      <RoutineDetailSheet
+        routineId={detailRoutineId}
+        onClose={() => setDetailRoutineId(null)}
       />
     </View>
   );
