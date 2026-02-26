@@ -17,6 +17,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useColorScheme } from "@/components/useColorScheme";
 import { AppThemeProvider, useAppTheme } from "@/components/theme/AppThemeProvider";
 import { useNotificationSync } from "@/lib/hooks/useNotificationSync";
+import { useProfileSync } from "@/lib/hooks/useProfileSync";
 import { supabase } from "@/lib/supabase";
 
 export {
@@ -64,6 +65,11 @@ const queryClient = new QueryClient();
 
 function NotificationSync() {
   useNotificationSync();
+  return null;
+}
+
+function ProfileSync() {
+  useProfileSync();
   return null;
 }
 
@@ -129,6 +135,7 @@ function RootLayoutNav() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <NotificationSync />
+        <ProfileSync />
         <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
           <Stack>
             {/* 인증 플로우 */}
@@ -150,6 +157,16 @@ function RootLayoutNav() {
             {/* 수정 화면 */}
             <Stack.Screen
               name="edit"
+              options={{
+                presentation: "modal",
+                headerShown: false,
+                contentStyle: { backgroundColor: theme.colors.bg },
+              }}
+            />
+
+            {/* 친구 관리 화면 */}
+            <Stack.Screen
+              name="friends"
               options={{
                 presentation: "modal",
                 headerShown: false,
