@@ -16,6 +16,8 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { useColorScheme } from "@/components/useColorScheme";
 import { AppThemeProvider, useAppTheme } from "@/components/theme/AppThemeProvider";
+import { useNotificationSync } from "@/lib/hooks/useNotificationSync";
+import { useProfileSync } from "@/lib/hooks/useProfileSync";
 import { supabase } from "@/lib/supabase";
 
 export {
@@ -60,6 +62,16 @@ export default function RootLayout() {
 }
 
 const queryClient = new QueryClient();
+
+function NotificationSync() {
+  useNotificationSync();
+  return null;
+}
+
+function ProfileSync() {
+  useProfileSync();
+  return null;
+}
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
@@ -122,6 +134,8 @@ function RootLayoutNav() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
+        <NotificationSync />
+        <ProfileSync />
         <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
           <Stack>
             {/* 인증 플로우 */}
@@ -134,9 +148,38 @@ function RootLayoutNav() {
             <Stack.Screen
               name="create"
               options={{
-                presentation: "modal", // 아래에서 위로 올라오는 애니메이션
-                headerShown: false, // 커스텀 헤더를 쓸 것이므로 기본 헤더 숨김
-                contentStyle: { backgroundColor: theme.colors.bg }, // 배경색 유지
+                presentation: "modal",
+                headerShown: false,
+                contentStyle: { backgroundColor: theme.colors.bg },
+              }}
+            />
+
+            {/* 수정 화면 */}
+            <Stack.Screen
+              name="edit"
+              options={{
+                presentation: "modal",
+                headerShown: false,
+                contentStyle: { backgroundColor: theme.colors.bg },
+              }}
+            />
+
+            {/* 친구 관리 화면 */}
+            <Stack.Screen
+              name="friends"
+              options={{
+                presentation: "modal",
+                headerShown: false,
+                contentStyle: { backgroundColor: theme.colors.bg },
+              }}
+            />
+
+            {/* 설정 화면 */}
+            <Stack.Screen
+              name="settings"
+              options={{
+                headerShown: false,
+                contentStyle: { backgroundColor: theme.colors.bg },
               }}
             />
           </Stack>

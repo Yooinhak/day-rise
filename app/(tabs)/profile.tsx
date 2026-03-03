@@ -2,9 +2,18 @@
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
+import { WeeklyWaveChart } from "@/components/profile/WeeklyWaveChart";
 import { useAppTheme } from "@/components/theme/AppThemeProvider";
+import { useProfileStats } from "@/lib/hooks/useProfileStats";
 import { supabase } from "@/lib/supabase";
 
 export default function StatsScreen() {
@@ -12,6 +21,7 @@ export default function StatsScreen() {
   const { theme } = useAppTheme();
   const c = theme.classes;
   const router = useRouter();
+  const { data: stats, isLoading } = useProfileStats();
 
   async function handleSignOut() {
     if (isSigningOut) return;
@@ -22,6 +32,18 @@ export default function StatsScreen() {
     }
     setIsSigningOut(false);
   }
+
+  if (isLoading) {
+    return (
+      <View className={`flex-1 ${c.bg} items-center justify-center`}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
+
+  const thisMonthRate = stats?.thisMonthRate ?? 0;
+  const monthDiff = stats?.monthDiff ?? 0;
+  const globalStreak = stats?.globalStreak ?? 0;
 
   return (
     <ScrollView className={`flex-1 ${c.bg} px-6 pt-16`}>
@@ -37,40 +59,21 @@ export default function StatsScreen() {
           <Text className="text-white/80 text-sm font-medium">
             이번 달은 벌써
           </Text>
-          <Text className="text-white text-3xl font-bold mt-1">82% 달성!</Text>
+          <Text className="text-white text-3xl font-bold mt-1">
+            {thisMonthRate}% 달성!
+          </Text>
           <Text className="text-white/80 text-xs mt-2">
-            지난달보다 12%나 더 해냈어요.
+            {monthDiff >= 0
+              ? `지난달보다 ${monthDiff}%나 더 해냈어요.`
+              : `지난달보다 ${Math.abs(monthDiff)}% 줄었어요. 화이팅!`}
           </Text>
         </View>
         <Feather name="award" size={50} color="white" />
       </View>
 
-      {/* 실천 기록 (Heatmap 느낌의 그리드) */}
+      {/* 주간 달성률 트렌드 차트 */}
       <View className="mb-8">
-        <Text className={`${c.textMain} text-lg font-bold mb-4`}>
-          성취 기록
-        </Text>
-        <View
-          className={`${c.card} p-5 rounded-2xl flex-row flex-wrap justify-between border ${c.borderSoft}`}
-        >
-          {Array.from({ length: 28 }).map((_, i) => (
-            <View
-              key={i}
-              className={`w-6 h-6 rounded-md mb-2 ${
-                i % 7 === 0
-                  ? c.primaryBg
-                  : i % 3 === 0
-                    ? c.primaryBg60
-                    : i % 5 === 0
-                      ? c.secondaryBg40
-                      : c.mutedBg
-              }`}
-            />
-          ))}
-        </View>
-        <Text className={`${c.textSub} text-xs mt-2 text-right`}>
-          최근 4주간의 기록입니다
-        </Text>
+        <WeeklyWaveChart data={stats?.last28Days ?? []} />
       </View>
 
       {/* 획득한 배지 섹션 */}
@@ -79,9 +82,23 @@ export default function StatsScreen() {
           수집한 배지
         </Text>
         <View className="flex-row space-x-4">
-          <BadgeItem icon="zap" label="3일 연속" color={c.accentBg} />
-          <BadgeItem icon="moon" label="밤의 요정" color={c.primaryBg15} />
-          <BadgeItem icon="heart" label="자기관리" color={c.secondaryBg15} />
+          {globalStreak >= 3 && (
+            <BadgeItem icon="zap" label="3일 연속" color={c.accentBg} />
+          )}
+          {globalStreak >= 7 && (
+            <BadgeItem icon="flame" label="7일 연속" color={c.primaryBg15} />
+          )}
+          {globalStreak >= 30 && (
+            <BadgeItem icon="award" label="30일 달성" color={c.secondaryBg15} />
+          )}
+          {(stats?.longestStreak ?? 0) >= 14 && (
+            <BadgeItem icon="star" label="2주 마스터" color={c.primaryBg15} />
+          )}
+          {globalStreak === 0 && (stats?.longestStreak ?? 0) < 3 && (
+            <Text className={`${c.textSub} text-sm`}>
+              3일 연속 달성하면 첫 배지를 획득해요!
+            </Text>
+          )}
         </View>
       </View>
 
@@ -149,3 +166,4 @@ function BadgeItem({
     </View>
   );
 }
+

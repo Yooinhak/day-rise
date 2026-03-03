@@ -1,7 +1,13 @@
+import { cancelRoutineNotification } from "@/lib/notifications";
 import { supabase } from "@/lib/supabase";
+import {
+  calculateGlobalStreak,
+  calculateRoutineStreak,
+  StreakLogEntry,
+} from "@/lib/utils/streakCalculator";
 import { Tables } from "@/types/database.types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { startOfMonth } from "date-fns";
+import { startOfMonth, subDays } from "date-fns";
 import { useEffect, useState } from "react";
 import { Alert } from "react-native";
 
@@ -9,16 +15,25 @@ export type RoutineRow = Tables<"routines">;
 export type RoutineLogRow = Tables<"routine_logs">;
 export type HomeRoutine = RoutineRow & {
   routine_logs: Pick<RoutineLogRow, "id" | "completed_at">[] | null;
+  streak?: number;
 };
 
-const fetchHomeData = async () => {
+type HomeData = {
+  routines: HomeRoutine[];
+  user: { id: string; email?: string; user_metadata?: Record<string, any> };
+  globalStreak: number;
+};
+
+const fetchHomeData = async (): Promise<HomeData | null> => {
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return null;
 
   const monthStart = startOfMonth(new Date()).toISOString();
+  const sixtyDaysAgo = subDays(new Date(), 60).toISOString();
 
+  // 루틴 및 이번 달 로그 조회
   const { data: routines, error } = await supabase
     .from("routines")
     .select(
@@ -37,7 +52,36 @@ const fetchHomeData = async () => {
     .returns<HomeRoutine[]>();
 
   if (error) throw error;
-  return { routines, user };
+  if (!routines) return { routines: [], user, globalStreak: 0 };
+
+  // 스트릭 계산용 로그 조회 (최근 60일)
+  const { data: streakLogs } = await supabase
+    .from("routine_logs")
+    .select("routine_id, completed_at")
+    .eq("user_id", user.id)
+    .gte("completed_at", sixtyDaysAgo);
+
+  const logs: StreakLogEntry[] = streakLogs || [];
+
+  // 일일 루틴 필터링
+  const dailyRoutines = routines.filter((r) => r.frequency === "daily");
+
+  // 전체 스트릭 계산
+  const globalStreak = calculateGlobalStreak(
+    logs,
+    dailyRoutines.map((r) => ({ id: r.id, created_at: r.created_at }))
+  );
+
+  // 개별 스트릭 계산 및 루틴에 추가
+  const routinesWithStreak: HomeRoutine[] = routines.map((r) => ({
+    ...r,
+    streak:
+      r.frequency === "daily"
+        ? calculateRoutineStreak(logs, r.id, r.created_at)
+        : undefined,
+  }));
+
+  return { routines: routinesWithStreak, user, globalStreak };
 };
 
 export const useHomeRoutines = () => {
@@ -94,6 +138,8 @@ export const useHomeRoutines = () => {
 
   const deleteRoutine = useMutation({
     mutationFn: async (routineId: string) => {
+      await cancelRoutineNotification(routineId);
+
       const { error } = await supabase
         .from("routines")
         .update({ is_active: false })

@@ -1,14 +1,18 @@
 import { useAppTheme } from "@/components/theme/AppThemeProvider";
 import { scheduleRoutineNotification } from "@/lib/notifications";
+import { supabase } from "@/lib/supabase";
+import { Enums, TablesInsert } from "@/types/database.types";
 import { Feather } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useQueryClient } from "@tanstack/react-query";
 import { format, isValid, parse, set } from "date-fns";
 import { ko } from "date-fns/locale";
-import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { router, useLocalSearchParams } from "expo-router";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
+  ActivityIndicator,
+  Alert,
   Platform,
   ScrollView,
   Text,
@@ -16,22 +20,20 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { supabase } from "../lib/supabase"; // 설정해둔 supabase 클라이언트
-import { Enums, TablesInsert } from "../types/database.types";
 
-// 1. 폼 데이터 타입 정의
-type RoutineInsert = TablesInsert<"routines">;
 type RoutineFrequency = Enums<"frequency_type">;
 
 interface RoutineFormValues {
-  title: RoutineInsert["title"];
+  title: string;
   frequency: RoutineFrequency;
-  target_count: NonNullable<RoutineInsert["target_count"]>;
-  reminder_time: RoutineInsert["reminder_time"];
+  target_count: number;
+  reminder_time: TablesInsert<"routines">["reminder_time"];
 }
 
-export default function CreateRoutineScreen() {
+export default function EditRoutineScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [isLoadingRoutine, setIsLoadingRoutine] = useState(true);
   const queryClient = useQueryClient();
   const { theme } = useAppTheme();
   const c = theme.classes;
@@ -42,6 +44,7 @@ export default function CreateRoutineScreen() {
     formState: { errors, isSubmitting },
     setValue,
     watch,
+    reset,
   } = useForm<RoutineFormValues>({
     defaultValues: {
       title: "",
@@ -51,53 +54,63 @@ export default function CreateRoutineScreen() {
     },
   });
 
-  const onSubmit = async (data: RoutineFormValues) => {
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("로그인이 필요합니다.");
+  // 기존 루틴 데이터 불러오기
+  useEffect(() => {
+    if (!id) return;
 
-      const { data: orderData, error: orderError } = await supabase
+    const fetchRoutine = async () => {
+      const { data, error } = await supabase
         .from("routines")
-        .select("sort_order")
-        .eq("user_id", user.id)
-        .eq("is_active", true)
-        .order("sort_order", { ascending: false })
-        .limit(1);
-
-      if (orderError) throw orderError;
-
-      const nextSortOrder = (orderData?.[0]?.sort_order ?? -1) + 1;
-
-      const { data: inserted, error } = await supabase
-        .from("routines")
-        .insert({
-          user_id: user.id,
-          title: data.title,
-          frequency: data.frequency,
-          target_count: data.target_count,
-          reminder_time: data.reminder_time,
-          sort_order: nextSortOrder,
-        })
-        .select("id")
+        .select("*")
+        .eq("id", id)
         .single();
+
+      if (error || !data) {
+        Alert.alert("오류", "루틴 정보를 불러올 수 없습니다.");
+        router.back();
+        return;
+      }
+
+      reset({
+        title: data.title,
+        frequency: data.frequency,
+        target_count: data.target_count,
+        reminder_time: data.reminder_time,
+      });
+      setIsLoadingRoutine(false);
+    };
+
+    fetchRoutine();
+  }, [id, reset]);
+
+  const onSubmit = async (formData: RoutineFormValues) => {
+    if (!id) return;
+
+    try {
+      const { error } = await supabase
+        .from("routines")
+        .update({
+          title: formData.title,
+          frequency: formData.frequency,
+          target_count: formData.target_count,
+          reminder_time: formData.reminder_time,
+        })
+        .eq("id", id);
 
       if (error) throw error;
 
-      if (inserted) {
-        scheduleRoutineNotification({
-          id: inserted.id,
-          title: data.title,
-          reminder_time: data.reminder_time ?? null,
-          is_active: true,
-        });
-      }
+      scheduleRoutineNotification({
+        id,
+        title: formData.title,
+        reminder_time: formData.reminder_time ?? null,
+        is_active: true,
+      });
 
       queryClient.invalidateQueries({ queryKey: ["home-routines"] });
+      queryClient.invalidateQueries({ queryKey: ["profile-stats"] });
       router.back();
     } catch (error: any) {
-      alert(error.message);
+      Alert.alert("오류", error.message);
     }
   };
 
@@ -144,6 +157,14 @@ export default function CreateRoutineScreen() {
     return format(parsed, "a hh:mm", { locale: ko });
   };
 
+  if (isLoadingRoutine) {
+    return (
+      <View className={`flex-1 ${c.bg} items-center justify-center`}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <View className={`flex-1 ${c.bg} px-6 pt-12`}>
       <TouchableOpacity onPress={() => router.back()} className="mb-4">
@@ -152,7 +173,7 @@ export default function CreateRoutineScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false}>
         <Text className={`${c.textMain} text-2xl font-bold mb-8`}>
-          어떤 습관을{"\n"}만들어볼까요? ✨
+          목표를 수정해볼까요?
         </Text>
 
         {/* 1. 목표 이름 입력 */}
@@ -313,7 +334,7 @@ export default function CreateRoutineScreen() {
           </View>
         </View>
 
-        {/* 생성 버튼 */}
+        {/* 수정 버튼 */}
         <TouchableOpacity
           className={`${c.primaryBg} p-5 rounded-2xl items-center shadow-lg ${c.shadowPrimary30} mb-10 ${
             isSubmitting ? "opacity-50" : ""
@@ -322,7 +343,7 @@ export default function CreateRoutineScreen() {
           disabled={isSubmitting}
         >
           <Text className="text-white font-bold text-lg">
-            {isSubmitting ? "목표 설정 중..." : "이 목표로 시작하기"}
+            {isSubmitting ? "수정 중..." : "수정 완료"}
           </Text>
         </TouchableOpacity>
       </ScrollView>

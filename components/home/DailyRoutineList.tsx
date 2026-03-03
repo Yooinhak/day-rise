@@ -12,6 +12,8 @@ type DailyRoutineListProps = {
   onToggle: (routineId: string) => void;
   onCancel: (logId: string, title: string) => void;
   onDelete: (routineId: string, title: string) => void;
+  onEdit: (routineId: string) => void;
+  onLongPress: (routineId: string) => void;
 };
 
 export const DailyRoutineList = ({
@@ -24,6 +26,8 @@ export const DailyRoutineList = ({
   onToggle,
   onCancel,
   onDelete,
+  onEdit,
+  onLongPress,
 }: DailyRoutineListProps) => {
   if (isEditing) {
     return (
@@ -44,9 +48,13 @@ export const DailyRoutineList = ({
               title={item.title}
               time={getTimeLabel(item)}
               done={done}
+              streak={item.streak}
               isEditing={isEditing}
               isDragging={isActive}
               onDrag={drag}
+              onLongPress={() => {
+                if (!isEditing) onLongPress(item.id);
+              }}
               onPress={() => {
                 if (isEditing) return;
                 if (!done) {
@@ -57,6 +65,7 @@ export const DailyRoutineList = ({
                   onCancel(todayLogId, item.title);
                 }
               }}
+              onEdit={() => onEdit(item.id)}
               onDelete={() => {
                 if (!isEditing) return;
                 onDelete(item.id, item.title);
@@ -77,7 +86,9 @@ export const DailyRoutineList = ({
         title={routine.title}
         time={getTimeLabel(routine)}
         done={done}
+        streak={routine.streak}
         isEditing={isEditing}
+        onLongPress={() => onLongPress(routine.id)}
         onPress={() => {
           if (!done) {
             onToggle(routine.id);
@@ -87,6 +98,7 @@ export const DailyRoutineList = ({
             onCancel(todayLogId, routine.title);
           }
         }}
+        onEdit={() => onEdit(routine.id)}
         onDelete={() => {
           if (!isEditing) return;
           onDelete(routine.id, routine.title);
