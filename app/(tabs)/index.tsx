@@ -1,10 +1,13 @@
 import { ConfirmActionModal } from "@/components/home/ConfirmActionModal";
 import { DailyRoutineList } from "@/components/home/DailyRoutineList";
+import { HomeEmptyState } from "@/components/home/HomeEmptyState";
 import { HomeSummaryCard } from "@/components/home/HomeSummaryCard";
+import { OfflineBanner } from "@/components/home/OfflineBanner";
 import { PeriodicGoalList } from "@/components/home/PeriodicGoalList";
 import { RoutineDetailSheet } from "@/components/home/RoutineDetailSheet";
 import { useAppTheme } from "@/components/theme/AppThemeProvider";
 import { HomeRoutine, useHomeRoutines } from "@/lib/hooks/useHomeRoutines";
+import { useNetworkStatus } from "@/lib/hooks/useNetworkStatus";
 import { Feather } from "@expo/vector-icons";
 import {
   differenceInDays,
@@ -51,6 +54,7 @@ export default function HomeScreen() {
     deleteRoutine,
     updateOrder,
   } = useHomeRoutines();
+  const { isOnline } = useNetworkStatus();
 
   const userName =
     data?.user.user_metadata?.name || data?.user.email?.split("@")[0] || "친구";
@@ -181,6 +185,12 @@ export default function HomeScreen() {
         }
         className="flex-1"
       >
+        {!isOnline && <OfflineBanner />}
+
+        {orderedRoutines.length === 0 ? (
+          <HomeEmptyState />
+        ) : (
+          <>
         <HomeSummaryCard
           todayProgress={todayProgress}
           completedDaily={completedDaily}
@@ -250,10 +260,14 @@ export default function HomeScreen() {
             onLongPress={(routineId) => setDetailRoutineId(routineId)}
           />
         </View>
+          </>
+        )}
       </ScrollView>
 
       <TouchableOpacity
         onPress={() => router.push("/create")}
+        accessibilityRole="button"
+        accessibilityLabel="새 루틴 추가"
         className={`absolute bottom-6 right-6 w-14 h-14 ${c.primaryBg} rounded-full items-center justify-center shadow-lg ${c.shadowPrimary40}`}
       >
         <Feather name="plus" size={30} color="white" />

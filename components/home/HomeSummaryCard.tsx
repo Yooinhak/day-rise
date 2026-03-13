@@ -23,6 +23,8 @@ export function HomeSummaryCard({
   return (
     <View
       className={`${c.primaryBg10} p-5 rounded-2xl mb-6 border ${c.primaryBorder20} relative`}
+      accessibilityRole="summary"
+      accessibilityLabel={`오늘 ${completedDaily}개 중 ${totalDaily}개 완료, 달성률 ${todayProgress}%, 이번 주 ${weeklyProgress}%, 연속 ${globalStreak}일`}
     >
       {globalStreak > 0 && (
         <View className="absolute -top-2 -right-2 flex-row items-center bg-orange-500 px-3 py-1 rounded-full shadow-sm z-10">

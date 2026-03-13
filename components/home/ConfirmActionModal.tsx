@@ -1,5 +1,6 @@
 import { Modal, Text, TouchableOpacity, View } from "react-native";
 import { useAppTheme } from "@/components/theme/AppThemeProvider";
+import { type ReactNode } from "react";
 
 type ConfirmActionModalProps = {
   visible: boolean;
@@ -9,6 +10,7 @@ type ConfirmActionModalProps = {
   confirmLabel: string;
   onClose: () => void;
   onConfirm: () => void;
+  children?: ReactNode;
 };
 
 export function ConfirmActionModal({
@@ -19,6 +21,7 @@ export function ConfirmActionModal({
   confirmLabel,
   onClose,
   onConfirm,
+  children,
 }: ConfirmActionModalProps) {
   const { theme } = useAppTheme();
   const c = theme.classes;
@@ -33,11 +36,11 @@ export function ConfirmActionModal({
           </Text>
           <Text className={`${c.textSub} text-sm`}>{title}</Text>
           {detail ? (
-            <Text className={`${c.textSub} text-xs mt-2 mb-6`}>{detail}</Text>
-          ) : (
-            <View className="mb-6" />
-          )}
-          <View className="flex-row items-center justify-end">
+            <Text className={`${c.textSub} text-xs mt-2`}>{detail}</Text>
+          ) : null}
+          {children}
+          {!children && !detail ? <View className="mb-6" /> : null}
+          <View className={`flex-row items-center justify-end ${children || detail ? "mt-4" : ""}`}>
             <TouchableOpacity
               onPress={onClose}
               className={`px-4 py-2 rounded-full ${c.mutedBg} border ${c.borderSoft} mr-2`}

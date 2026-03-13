@@ -55,6 +55,10 @@ export function RoutineItem({
       onLongPress={onLongPress}
       haptic={isEditing ? "none" : "light"}
       disabled={isEditing}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: done }}
+      accessibilityLabel={`${title}, ${time}${streak && streak > 0 ? `, ${streak}일 연속` : ""}${done ? ", 완료됨" : ""}`}
+      accessibilityHint={done ? "길게 눌러 상세 정보 보기" : "눌러서 완료하기"}
       className={`flex-row items-center p-5 rounded-2xl ${c.card} mb-3 border ${c.borderSoft} ${
         isDragging ? `${c.primaryBorder60} ${c.primaryBg5}` : ""
       }`}

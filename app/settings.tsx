@@ -3,14 +3,17 @@ import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   ScrollView,
   Switch,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 
+import { ConfirmActionModal } from "@/components/home/ConfirmActionModal";
 import { useAppTheme } from "@/components/theme/AppThemeProvider";
 import {
   cancelAllRoutineNotifications,
@@ -23,6 +26,9 @@ import { supabase } from "@/lib/supabase";
 export default function SettingsScreen() {
   const { theme, themeId, setThemeId, availableThemes } = useAppTheme();
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [notificationsOn, setNotificationsOn] = useState(true);
   const [notifLoading, setNotifLoading] = useState(true);
   const queryClient = useQueryClient();
@@ -65,6 +71,28 @@ export default function SettingsScreen() {
       Alert.alert("로그아웃 실패", error.message);
     }
     setIsSigningOut(false);
+  }
+
+  async function handleDeleteAccount() {
+    if (isDeleting) return;
+    setIsDeleting(true);
+    try {
+      await cancelAllRoutineNotifications();
+      const { error } = await supabase.rpc("delete_user_account");
+      if (error) {
+        Alert.alert(
+          "계정 삭제 실패",
+          "잠시 후 다시 시도해주세요.\n문제가 지속되면 설정 > 문의하기를 이용해주세요.",
+        );
+        setIsDeleting(false);
+        return;
+      }
+      queryClient.clear();
+      await supabase.auth.signOut();
+    } catch {
+      Alert.alert("계정 삭제 실패", "네트워크 연결을 확인해주세요.");
+      setIsDeleting(false);
+    }
   }
 
   return (
@@ -156,7 +184,7 @@ export default function SettingsScreen() {
         </View>
       </View>
 
-      <View className="mb-12">
+      <View className="mb-6">
         <Text className={`${c.textMain} text-lg font-bold mb-4`}>계정</Text>
         <View
           className={`${c.card} border ${c.borderSoft} rounded-2xl p-5 shadow-sm`}
@@ -178,6 +206,63 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
       </View>
+
+      <View className="mb-12">
+        <Text className={`${c.textMain} text-lg font-bold mb-4`}>
+          위험 구역
+        </Text>
+        <View
+          className={`${c.card} border border-red-300 rounded-2xl p-5 shadow-sm`}
+        >
+          <Text className={`${c.textMain} text-sm font-semibold mb-1`}>
+            계정 영구 삭제
+          </Text>
+          <Text className={`${c.textSub} text-xs mb-4`}>
+            모든 루틴, 기록, 친구 관계가 영구적으로 삭제되며{"\n"}
+            이 작업은 되돌릴 수 없습니다.
+          </Text>
+          <TouchableOpacity
+            onPress={() => setShowDeleteConfirm(true)}
+            className="flex-row items-center justify-center rounded-2xl px-4 py-4 bg-red-500"
+          >
+            <Feather name="alert-triangle" size={18} color="white" />
+            <Text className="text-white font-bold text-base ml-2">
+              계정 삭제
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* 계정 삭제 확인 모달 */}
+      <ConfirmActionModal
+        visible={showDeleteConfirm}
+        headline="정말로 계정을 삭제하시겠어요?"
+        title="모든 루틴, 기록, 친구 관계가 영구 삭제됩니다."
+        detail={`계속하려면 아래에 "삭제"를 입력해주세요.`}
+        confirmLabel={isDeleting ? "삭제 중..." : "영구 삭제"}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setDeleteConfirmText("");
+        }}
+        onConfirm={() => {
+          if (deleteConfirmText !== "삭제") {
+            Alert.alert("확인 필요", '"삭제"를 정확히 입력해주세요.');
+            return;
+          }
+          setShowDeleteConfirm(false);
+          setDeleteConfirmText("");
+          handleDeleteAccount();
+        }}
+      >
+        <TextInput
+          className={`${c.card} border ${c.borderSoft} rounded-xl px-4 py-3 mt-3 mb-2 text-base ${c.textMain}`}
+          placeholder='"삭제"를 입력해주세요'
+          placeholderTextColor={theme.colors.textSub}
+          value={deleteConfirmText}
+          onChangeText={setDeleteConfirmText}
+          autoCapitalize="none"
+        />
+      </ConfirmActionModal>
     </ScrollView>
   );
 }

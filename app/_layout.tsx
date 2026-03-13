@@ -1,5 +1,5 @@
-import "../global.css";
 import "react-native-gesture-handler";
+import "../global.css";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import {
@@ -7,30 +7,28 @@ import {
   DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
 import { SplashScreen, Stack, useRouter, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
-// import 'react-native-reanimated';
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
+import {
+  AppThemeProvider,
+  useAppTheme,
+} from "@/components/theme/AppThemeProvider";
 import { useColorScheme } from "@/components/useColorScheme";
-import { AppThemeProvider, useAppTheme } from "@/components/theme/AppThemeProvider";
 import { useNotificationSync } from "@/lib/hooks/useNotificationSync";
 import { useProfileSync } from "@/lib/hooks/useProfileSync";
 import { supabase } from "@/lib/supabase";
+import { hasCompletedOnboarding } from "./(auth)/onboarding";
 
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from "expo-router";
+export { ErrorBoundary } from "expo-router";
 
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
   initialRouteName: "(tabs)",
 };
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
@@ -39,7 +37,6 @@ export default function RootLayout() {
     ...FontAwesome.font,
   });
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error;
   }, [error]);
@@ -78,10 +75,17 @@ function RootLayoutNav() {
   const { theme } = useAppTheme();
   const router = useRouter();
   const segments = useSegments();
-  const [session, setSession] = useState<Awaited<
-    ReturnType<typeof supabase.auth.getSession>
-  >["data"]["session"]>(null);
+  const [session, setSession] =
+    useState<
+      Awaited<ReturnType<typeof supabase.auth.getSession>>["data"]["session"]
+    >(null);
   const [authReady, setAuthReady] = useState(false);
+  const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
+
+  // 온보딩 완료 여부 확인
+  useEffect(() => {
+    hasCompletedOnboarding().then(setOnboardingDone);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -108,7 +112,7 @@ function RootLayoutNav() {
         if (!isMounted) return;
         setSession(nextSession);
         setAuthReady(true);
-      }
+      },
     );
 
     return () => {
@@ -118,16 +122,21 @@ function RootLayoutNav() {
   }, []);
 
   useEffect(() => {
-    if (!authReady) return;
+    if (!authReady || onboardingDone === null) return;
+
     const inAuthGroup = segments[0] === "(auth)";
-    if (!session && !inAuthGroup) {
+
+    if (!onboardingDone && segments[1] !== "onboarding") {
+      // 첫 실행: 온보딩으로
+      router.replace("/(auth)/onboarding");
+    } else if (!session && !inAuthGroup) {
       router.replace("/(auth)/login");
     } else if (session && inAuthGroup) {
       router.replace("/(tabs)");
     }
-  }, [authReady, router, segments, session]);
+  }, [authReady, onboardingDone, router, segments, session]);
 
-  if (!authReady) {
+  if (!authReady || onboardingDone === null) {
     return null;
   }
 
@@ -136,7 +145,9 @@ function RootLayoutNav() {
       <QueryClientProvider client={queryClient}>
         <NotificationSync />
         <ProfileSync />
-        <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+        <ThemeProvider
+          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+        >
           <Stack>
             {/* 인증 플로우 */}
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
