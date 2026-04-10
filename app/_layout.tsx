@@ -20,8 +20,8 @@ import {
 import { useColorScheme } from "@/components/useColorScheme";
 import { useNotificationSync } from "@/lib/hooks/useNotificationSync";
 import { useProfileSync } from "@/lib/hooks/useProfileSync";
+import { hasCompletedOnboarding } from "@/lib/onboarding";
 import { supabase } from "@/lib/supabase";
-import { hasCompletedOnboarding } from "./(auth)/onboarding";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -121,6 +121,11 @@ function RootLayoutNav() {
     };
   }, []);
 
+  // segments가 바뀔 때마다 온보딩 상태 재확인 (완료 후 상태 반영)
+  useEffect(() => {
+    hasCompletedOnboarding().then(setOnboardingDone);
+  }, [segments]);
+
   useEffect(() => {
     if (!authReady || onboardingDone === null) return;
 
@@ -129,7 +134,7 @@ function RootLayoutNav() {
     if (!onboardingDone && segments[1] !== "onboarding") {
       // 첫 실행: 온보딩으로
       router.replace("/(auth)/onboarding");
-    } else if (!session && !inAuthGroup) {
+    } else if (onboardingDone && !session && !inAuthGroup) {
       router.replace("/(auth)/login");
     } else if (session && inAuthGroup) {
       router.replace("/(tabs)");

@@ -1,8 +1,7 @@
 import { useAppTheme } from "@/components/theme/AppThemeProvider";
-import { Feather } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { completeOnboarding } from "@/lib/onboarding";
 import { router } from "expo-router";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -12,7 +11,6 @@ import {
   type ViewToken,
 } from "react-native";
 
-const ONBOARDING_KEY = "dayrise.onboarding.completed";
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 type OnboardingSlide = {
@@ -39,30 +37,24 @@ const slides: OnboardingSlide[] = [
   },
 ];
 
-export async function hasCompletedOnboarding(): Promise<boolean> {
-  const value = await AsyncStorage.getItem(ONBOARDING_KEY);
-  return value === "true";
-}
-
-export async function completeOnboarding(): Promise<void> {
-  await AsyncStorage.setItem(ONBOARDING_KEY, "true");
-}
-
 export default function OnboardingScreen() {
   const { theme } = useAppTheme();
   const c = theme.classes;
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
 
-  const onViewableItemsChanged = useRef(
+  const onViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
       if (viewableItems.length > 0 && viewableItems[0].index != null) {
         setCurrentIndex(viewableItems[0].index);
       }
     },
-  ).current;
+    [],
+  );
 
-  const viewabilityConfig = useRef({ viewAreaCoveragePercentThreshold: 50 }).current;
+  const viewabilityConfig = useRef({
+    viewAreaCoveragePercentThreshold: 50,
+  }).current;
 
   async function handleNext() {
     if (currentIndex < slides.length - 1) {
@@ -86,7 +78,9 @@ export default function OnboardingScreen() {
           accessibilityRole="button"
           accessibilityLabel="온보딩 건너뛰기"
         >
-          <Text className={`${c.textSub} text-base font-medium`}>건너뛰기</Text>
+          <Text className={`${c.textSub} text-base font-medium`}>
+            건너뛰기
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -118,7 +112,6 @@ export default function OnboardingScreen() {
       />
 
       <View className="px-8 pb-14">
-        {/* 페이지 인디케이터 */}
         <View className="flex-row items-center justify-center mb-8">
           {slides.map((_, index) => (
             <View

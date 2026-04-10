@@ -1,12 +1,10 @@
 import { supabase } from "@/lib/supabase";
 import { useAppTheme } from "@/components/theme/AppThemeProvider";
-import * as AppleAuthentication from "expo-apple-authentication";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Alert,
-  Platform,
   Text,
   TouchableOpacity,
   View,
@@ -18,13 +16,6 @@ export default function LoginScreen() {
   const { theme } = useAppTheme();
   const c = theme.classes;
   const [isLoading, setIsLoading] = useState(false);
-  const [appleAvailable, setAppleAvailable] = useState(false);
-
-  useEffect(() => {
-    if (Platform.OS === "ios") {
-      AppleAuthentication.isAvailableAsync().then(setAppleAvailable);
-    }
-  }, []);
 
   async function signInWithGoogle() {
     if (isLoading) return;
@@ -71,35 +62,8 @@ export default function LoginScreen() {
     }
   }
 
-  async function signInWithApple() {
-    if (isLoading) return;
-    setIsLoading(true);
-    try {
-      const credential = await AppleAuthentication.signInAsync({
-        requestedScopes: [
-          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
-          AppleAuthentication.AppleAuthenticationScope.EMAIL,
-        ],
-      });
-
-      if (credential.identityToken) {
-        const { error } = await supabase.auth.signInWithIdToken({
-          provider: "apple",
-          token: credential.identityToken,
-        });
-
-        if (error) {
-          Alert.alert("로그인 실패", "Apple 로그인 중 문제가 발생했어요.");
-        }
-      }
-    } catch (e: any) {
-      if (e.code !== "ERR_REQUEST_CANCELED") {
-        Alert.alert("로그인 실패", "네트워크 연결을 확인해주세요.");
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  // TODO: Apple 로그인은 Apple Developer 멤버십 가입 후 복원
+  // npm install expo-apple-authentication 후 signInWithApple 함수 복원
 
   return (
     <View className={`flex-1 ${c.bg} justify-center px-8`}>
@@ -125,20 +89,6 @@ export default function LoginScreen() {
             구글로 시작하기
           </Text>
         </TouchableOpacity>
-
-        {Platform.OS === "ios" && appleAvailable && (
-          <TouchableOpacity
-            onPress={signInWithApple}
-            disabled={isLoading}
-            accessibilityRole="button"
-            accessibilityLabel="Apple 계정으로 로그인"
-            className={`p-5 rounded-2xl flex-row items-center justify-center bg-black ${isLoading ? "opacity-50" : ""}`}
-          >
-            <Text className="text-white font-bold text-lg">
-              Apple로 시작하기
-            </Text>
-          </TouchableOpacity>
-        )}
       </View>
 
       <Text className={`${c.textSub} text-xs text-center mt-8`}>
